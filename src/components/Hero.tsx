@@ -53,7 +53,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenAIChat }) => {
   ];
 
   return (
-    <section className="relative min-h-[92vh] flex items-center justify-center pt-28 pb-16 overflow-hidden">
+    <section id="inicio" className="relative min-h-[92vh] flex items-center justify-center pt-28 pb-16 overflow-hidden">
       {/* Background Glows and Abstract Shapes */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[450px] bg-gradient-to-tr from-emerald-500/15 via-teal-500/15 to-cyan-500/10 blur-[130px] rounded-full pointer-events-none -z-10" />
       <div className="absolute -top-10 -left-10 w-96 h-96 bg-emerald-400/10 blur-[100px] rounded-full pointer-events-none -z-10" />
