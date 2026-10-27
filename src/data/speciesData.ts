@@ -21,7 +21,7 @@ export const speciesList: Species[] = [
     conservationStatus: 'LC',
     riskLevel: 'Inofensivo',
     riskDescription: 'Animal diminuto e bentônico, totalmente inofensivo aos humanos.',
-    imageUrl: '/images/species/anfioxo.jpg',
+    imageUrl: '/images/species/anfioxo.webp',
     imageAuthor: 'Wikimedia Commons / Hans Hillewaert (CC BY-SA 4.0)',
     imageLicense: 'Creative Commons Attribution-Share Alike 4.0',
     curiosities: [
@@ -56,7 +56,7 @@ export const speciesList: Species[] = [
     conservationStatus: 'LC',
     riskLevel: 'Inofensivo',
     riskDescription: 'Organismo séssil marinho sem toxinas perigosas ao contato humano.',
-    imageUrl: '/images/species/ascidia.jpg',
+    imageUrl: '/images/species/ascidia.webp',
     imageAuthor: 'Wikimedia Commons / Alberto Romeo (CC BY 3.0)',
     imageLicense: 'Creative Commons Attribution 3.0',
     curiosities: [
@@ -91,7 +91,7 @@ export const speciesList: Species[] = [
     conservationStatus: 'LC',
     riskLevel: 'Atenção / Defensivo',
     riskDescription: 'Pode ocasionalmente fixar sua ventosa em mergulhadores se atraída por movimento, mas não preda humanos. Alto impacto destrutivo em peixes nativos onde foi introduzida.',
-    imageUrl: '/images/species/lampreia-marinha.jpg',
+    imageUrl: '/images/species/lampreia-marinha.webp',
     imageAuthor: 'Wikimedia Commons / Aquarium Finisterrae',
     imageLicense: 'Creative Commons CC-BY-SA',
     curiosities: [
@@ -127,7 +127,7 @@ export const speciesList: Species[] = [
     riskLevel: 'Predador de Topo',
     riskDescription: 'Predador ápice marinho de grande porte. Mordidas em humanos decorrem geralmente de reconhecimento investigativo ou confusão visual com focas/leões-marinhos.',
     firstAidAdvice: 'Contenção urgente de hemorragia com torniquete ou pressão direta; resgate imediato da água e acionamento de resgate médico de emergência.',
-    imageUrl: '/images/species/tubarao-branco.jpg',
+    imageUrl: '/images/species/tubarao-branco.webp',
     imageAuthor: 'Wikimedia Commons / Terry Goss (CC BY-SA 3.0)',
     imageLicense: 'Creative Commons Attribution-ShareAlike 3.0',
     curiosities: [
@@ -162,7 +162,7 @@ export const speciesList: Species[] = [
     conservationStatus: 'LC',
     riskLevel: 'Inofensivo',
     riskDescription: 'Peixe pequeno, pacífico e sem toxinas ou risco para mergulhadores.',
-    imageUrl: '/images/species/peixe-palhaco.jpg',
+    imageUrl: '/images/species/peixe-palhaco.webp',
     imageAuthor: 'Wikimedia Commons / Ritik (CC BY-SA 4.0)',
     imageLicense: 'Creative Commons CC-BY-SA 4.0',
     curiosities: [
@@ -196,7 +196,7 @@ export const speciesList: Species[] = [
     conservationStatus: 'DD',
     riskLevel: 'Atenção / Defensivo',
     riskDescription: 'Animal tímido com humanos na natureza, mas seu grande porte físico e saltos poderosos podem tombar pequenas canoas ou provocar lesões mecânicas severas durante o manejo.',
-    imageUrl: '/images/species/pirarucu.jpg',
+    imageUrl: '/images/species/pirarucu.webp',
     imageAuthor: 'Wikimedia Commons / Gary Todd (Public Domain)',
     imageLicense: 'Public Domain',
     curiosities: [
@@ -232,7 +232,7 @@ export const speciesList: Species[] = [
     riskLevel: 'Tóxico',
     riskDescription: 'Passivamente tóxico: o veneno só é expelido sob compressão física das glândulas parotóides (ex: um cão que morde o sapo). O sapo NÃO ataca nem esguicha veneno voluntariamente contra pessoas.',
     firstAidAdvice: 'Se um animal doméstico morder o sapo, lavar a boca da vítima imediatamente com água corrente abundante para remover o muco e levar ao veterinário. Em humanos, lavar a pele ou olhos com água corrente se houver contato acidental.',
-    imageUrl: '/images/species/sapo-cururu.jpg',
+    imageUrl: '/images/species/sapo-cururu.webp',
     imageAuthor: 'Wikimedia Commons / LiquidGhoul (Public Domain)',
     imageLicense: 'Public Domain',
     curiosities: [
@@ -266,7 +266,7 @@ export const speciesList: Species[] = [
     conservationStatus: 'CR',
     riskLevel: 'Inofensivo',
     riskDescription: 'Espécie totalmente mansa e inofensiva para seres humanos.',
-    imageUrl: '/images/species/axolote.jpg',
+    imageUrl: '/images/species/axolote.webp',
     imageAuthor: 'Wikimedia Commons / ZePa (CC BY-SA 3.0)',
     imageLicense: 'Creative Commons CC-BY-SA 3.0',
     curiosities: [
@@ -301,7 +301,7 @@ export const speciesList: Species[] = [
     riskLevel: 'Tóxico',
     riskDescription: 'Considerado um dos animais mais tóxicos da Terra. Uma única rã possui batracotoxina suficiente em sua pele para matar múltiplos humanos adultos se ingerida ou absorvida por ferimento/mucosa.',
     firstAidAdvice: 'Nunca manipular sem luvas adequadas. Em caso de contato acidental com mucosas ou cortes, procurar imediatamente socorro médico hospitalar intensivo de urgência.',
-    imageUrl: '/images/species/ra-dardo-dourada.jpg',
+    imageUrl: '/images/species/ra-dardo-dourada.webp',
     imageAuthor: 'Wikimedia Commons / Wilfried Berns (CC BY-SA 2.0 de)',
     imageLicense: 'Creative Commons CC-BY-SA 2.0',
     curiosities: [
@@ -336,7 +336,7 @@ export const speciesList: Species[] = [
     conservationStatus: 'EN',
     riskLevel: 'Inofensivo',
     riskDescription: 'Totalmente dócil na água. Adultos desovando devem ser respeitados a distância para evitar estresse.',
-    imageUrl: '/images/species/tartaruga-verde.jpg',
+    imageUrl: '/images/species/tartaruga-verde.webp',
     imageAuthor: 'Wikimedia Commons / Bernard Dupont (CC BY-SA 2.0)',
     imageLicense: 'Creative Commons CC-BY-SA 2.0',
     curiosities: [
@@ -371,7 +371,7 @@ export const speciesList: Species[] = [
     riskLevel: 'Atenção / Defensivo',
     riskDescription: 'Não possui peçonha! Caso acoada, emite um sopro sonoro intimidador (assobio) e pode desferir mordidas defensivas dolorosas mas desprovidas de toxinas.',
     firstAidAdvice: 'Lavar o local da mordedura com água e sabão neutro para evitar infecção bacteriana secundária; não usar torniquetes nem substâncias caseiras.',
-    imageUrl: '/images/species/jiboia.jpg',
+    imageUrl: '/images/species/jiboia.webp',
     imageAuthor: 'Wikimedia Commons / Geoff Gallice (CC BY 2.0)',
     imageLicense: 'Creative Commons CC-BY 2.0',
     curiosities: [
@@ -406,7 +406,7 @@ export const speciesList: Species[] = [
     riskLevel: 'Atenção / Defensivo',
     riskDescription: 'Menor e menos agressivo que o jacaré-açu. Não costuma atacar humanos a não ser que seja acuado, manipulado ou quando a fêmea protege ativamente o ninho com filhotes.',
     firstAidAdvice: 'Em caso improvável de mordida, afastar-se da água, estancar sangramento e procurar atendimento médico hospitalar imediato com antibioticoterapia preventiva.',
-    imageUrl: '/images/species/jacare-do-pantanal.jpg',
+    imageUrl: '/images/species/jacare-do-pantanal.webp',
     imageAuthor: 'Wikimedia Commons / Bernard Dupont (CC BY-SA 2.0)',
     imageLicense: 'Creative Commons CC-BY-SA 2.0',
     curiosities: [
@@ -441,7 +441,7 @@ export const speciesList: Species[] = [
     conservationStatus: 'VU',
     riskLevel: 'Inofensivo',
     riskDescription: 'Espécie silvestre desprovida de risco para humanos; bico forte se manipulada irregularmente em resgates.',
-    imageUrl: '/images/species/arara-azul-grande.jpg',
+    imageUrl: '/images/species/arara-azul-grande.webp',
     imageAuthor: 'Wikimedia Commons / Giles Laurent (CC BY-SA 4.0)',
     imageLicense: 'Creative Commons CC-BY-SA 4.0',
     curiosities: [
@@ -475,7 +475,7 @@ export const speciesList: Species[] = [
     conservationStatus: 'LC',
     riskLevel: 'Inofensivo',
     riskDescription: 'Ave silvestre totalmente inofensiva ao ser humano.',
-    imageUrl: '/images/species/tucano-toco.jpg',
+    imageUrl: '/images/species/tucano-toco.webp',
     imageAuthor: 'Wikimedia Commons / Giles Laurent (CC BY-SA 4.0)',
     imageLicense: 'Creative Commons CC-BY-SA 4.0',
     curiosities: [
@@ -509,7 +509,7 @@ export const speciesList: Species[] = [
     conservationStatus: 'NT',
     riskLevel: 'Inofensivo',
     riskDescription: 'Animal selvagem antártico sem risco aos humanos.',
-    imageUrl: '/images/species/pinguim-imperador.jpg',
+    imageUrl: '/images/species/pinguim-imperador.webp',
     imageAuthor: 'Wikimedia Commons / Ian Duffy (CC BY 2.0)',
     imageLicense: 'Creative Commons CC-BY 2.0',
     curiosities: [
@@ -545,7 +545,7 @@ export const speciesList: Species[] = [
     riskLevel: 'Predador de Topo',
     riskDescription: 'Predador de grande porte. Ataques contra humanos são raros e ocorrem quase exclusivamente em situações de encurralamento, defesa de filhotes ou animais feridos.',
     firstAidAdvice: 'Nunca correr (desencadeia instinto de perseguição de felino). Manter contato visual, erguer os braços para parecer maior, falar em tom firme e recuar calmamente. Em caso de ataque, lutar com determinação contra olhos e focinho.',
-    imageUrl: '/images/species/onca-pintada.jpg',
+    imageUrl: '/images/species/onca-pintada.webp',
     imageAuthor: 'Wikimedia Commons / USFWS (Public Domain)',
     imageLicense: 'Public Domain',
     curiosities: [
@@ -580,7 +580,7 @@ export const speciesList: Species[] = [
     riskLevel: 'Atenção / Defensivo',
     riskDescription: 'Animal calmo e sociável. O risco sanitário direto decorre de ser hospedeira primária do carrapato-estrela (Amblyomma sculptum), vetor da Febre Maculosa Brasileira.',
     firstAidAdvice: 'Evitar sentar em gramados com presença frequente de capivaras. Se picado por carrapato, retirar com pinça sem esmagar e monitorar febre e dores no corpo por 15 dias, procurando UBS/hospital imediatamente caso surjam sintomas.',
-    imageUrl: '/images/species/capivara.jpg',
+    imageUrl: '/images/species/capivara.webp',
     imageAuthor: 'Wikimedia Commons / Paul K (CC BY 2.0)',
     imageLicense: 'Creative Commons CC-BY 2.0',
     curiosities: [
@@ -614,7 +614,7 @@ export const speciesList: Species[] = [
     conservationStatus: 'EN',
     riskLevel: 'Inofensivo',
     riskDescription: 'Gigante gentil e dócil em alto-mar sem agressividade com humanos.',
-    imageUrl: '/images/species/baleia-azul.jpg',
+    imageUrl: '/images/species/baleia-azul.webp',
     imageAuthor: 'Wikimedia Commons / NOAA (Domínio Público)',
     imageLicense: 'Public Domain',
     curiosities: [
@@ -649,7 +649,7 @@ export const speciesList: Species[] = [
     riskLevel: 'Atenção / Defensivo',
     riskDescription: 'Não é agressivo, mas sua mordedura pode transmitir o vírus da Raiva (Rhabdoviridae), doença viral com letalidade de quase 100% se não tratada preventivamente a tempo.',
     firstAidAdvice: 'Lavar exaustivamente o ferimento com água e sabão por 15 minutos; procurar imediatamente um posto de saúde para protocolo de profilaxia antirrábica pós-exposição (vacina e soro antirrábico). NUNCA manipular morcegos caídos no chão.',
-    imageUrl: '/images/species/morcego-vampiro.jpg',
+    imageUrl: '/images/species/morcego-vampiro.webp',
     imageAuthor: 'Wikimedia Commons / Uwe Schmidt (CC BY-SA 4.0)',
     imageLicense: 'Creative Commons CC-BY-SA 4.0',
     curiosities: [
@@ -685,7 +685,7 @@ export const speciesList: Species[] = [
     riskLevel: 'Peçonhento',
     riskDescription: 'Serpente solenóglifa altamente peçonhenta. O envenenamento laquético injeta grande volume de veneno, desencadeando hipotensão brusca, bradicardia, dor intensa, necrose e risco de choque.',
     firstAidAdvice: 'Ligue 192 (SAMU) ou transporte a vítima urgentemente para hospital com soro antilaquético ou antibotrópico-laquético. Mantenha a vítima em repouso absoluto hidratada; NÃO faça torniquetes, não corte nem chupe o ferimento!',
-    imageUrl: '/images/species/surucucu.jpg',
+    imageUrl: '/images/species/surucucu.webp',
     imageAuthor: 'Wikimedia Commons / Bernard Dupont (CC BY-SA 2.0)',
     imageLicense: 'Creative Commons CC-BY-SA 2.0',
     curiosities: [

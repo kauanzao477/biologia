@@ -64,6 +64,8 @@ export const HabitatsSection: React.FC = () => {
                 src={activeHabitat.imageUrl}
                 alt={activeHabitat.name}
                 className="w-full h-full object-cover"
+                loading="lazy"
+                decoding="async"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent lg:bg-gradient-to-r lg:from-transparent lg:to-slate-950/30" />
               

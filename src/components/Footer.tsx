@@ -1,6 +1,8 @@
 import React from 'react';
 import { Dna, ExternalLink } from 'lucide-react';
 
+const CURRENT_YEAR = new Date().getFullYear();
+
 export const Footer: React.FC = () => {
   return (
     <footer className="bg-slate-900 text-white pt-16 pb-12 border-t border-slate-800">
@@ -90,7 +92,7 @@ export const Footer: React.FC = () => {
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs text-slate-500">
           <div>
-            © {new Date().getFullYear()} Chordata: Explorando o Mundo dos Cordados • Projeto Educativo de Biologia
+            © {CURRENT_YEAR} Chordata: Explorando o Mundo dos Cordados • Projeto Educativo de Biologia
           </div>
           <div className="flex items-center gap-1 text-slate-400">
             <span>Ciência, Biodiversidade e Preservação</span>

@@ -3,7 +3,6 @@
 // and features a rich zoological knowledge-retrieval engine for Chordata topics.
 
 import https from 'node:https';
-import http from 'node:http';
 
 const CHORDATA_SYSTEM_PROMPT = `Você é o "BioChordata — Assistente dos Cordados", um assistente de inteligência artificial especializado em Zoologia, Biologia Comparada e Evolução do Filo Chordata.
 

@@ -58,14 +58,6 @@ Como posso ajudar você hoje? Você pode clicar em uma das perguntas sugeridas a
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
 
-  // Handle prompt passed from other sections (like FAQ or Hero)
-  useEffect(() => {
-    if (externalPrompt && externalPrompt.trim()) {
-      handleSendMessage(externalPrompt);
-      if (onClearExternalPrompt) onClearExternalPrompt();
-    }
-  }, [externalPrompt]);
-
   const handleSendMessage = async (textToSend?: string) => {
     const query = (textToSend || inputMessage).trim();
     if (!query || isLoading) return;
@@ -109,6 +101,14 @@ Como posso ajudar você hoje? Você pode clicar em uma das perguntas sugeridas a
       setIsLoading(false);
     }
   };
+
+  // Handle prompt passed from other sections (like FAQ or Hero)
+  useEffect(() => {
+    if (externalPrompt && externalPrompt.trim()) {
+      handleSendMessage(externalPrompt);
+      if (onClearExternalPrompt) onClearExternalPrompt();
+    }
+  }, [externalPrompt]);
 
   const handleCopy = (id: string, text: string) => {
     navigator.clipboard.writeText(text);

@@ -93,6 +93,7 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = () => {
                 alt={sp.commonName}
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                 loading="lazy"
+                decoding="async"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
 
@@ -157,6 +158,7 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = () => {
                   src={activeSpecies.imageUrl}
                   alt={activeSpecies.commonName}
                   className="max-h-full max-w-full object-contain"
+                  decoding="async"
                 />
               </div>
 

@@ -19,35 +19,35 @@ export const Hero: React.FC<HeroProps> = ({ onOpenAIChat }) => {
       group: 'Peixes',
       badge: 'Aquáticos',
       name: 'Tubarão-branco & Pirarucu',
-      image: '/images/species/tubarao-branco.jpg',
+      image: '/images/species/tubarao-branco.webp',
       gradient: 'from-blue-600/80 to-cyan-900/90'
     },
     {
       group: 'Anfíbios',
       badge: 'Dupla vida',
       name: 'Axolote & Sapo-cururu',
-      image: '/images/species/axolote.jpg',
+      image: '/images/species/axolote.webp',
       gradient: 'from-emerald-600/80 to-teal-900/90'
     },
     {
       group: 'Répteis',
       badge: 'Amniotas',
       name: 'Tartaruga-verde & Jiboia',
-      image: '/images/species/tartaruga-verde.jpg',
+      image: '/images/species/tartaruga-verde.webp',
       gradient: 'from-amber-600/80 to-emerald-950/90'
     },
     {
       group: 'Aves',
       badge: 'Arcossauros',
       name: 'Arara-azul & Tucano',
-      image: '/images/species/arara-azul-grande.jpg',
+      image: '/images/species/arara-azul-grande.webp',
       gradient: 'from-indigo-600/80 to-blue-950/90'
     },
     {
       group: 'Mamíferos',
       badge: 'Endotérmicos',
       name: 'Onça-pintada & Baleia',
-      image: '/images/species/onca-pintada.jpg',
+      image: '/images/species/onca-pintada.webp',
       gradient: 'from-rose-600/80 to-slate-950/90'
     }
   ];
@@ -162,6 +162,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenAIChat }) => {
                     alt={card.name}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     loading="lazy"
+                    decoding="async"
                   />
                   <div className={`absolute inset-0 bg-gradient-to-t ${card.gradient} opacity-75 group-hover:opacity-85 transition-opacity`} />
                   
