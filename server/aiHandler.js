@@ -1,8 +1,14 @@
 // Backend AI Handler for BioChordata
-// Integrates with Gemini API / OpenAI API when key is configured,
+// Integrates with the Google Gemini API when a key is configured,
 // and features a rich zoological knowledge-retrieval engine for Chordata topics.
 
 import https from 'node:https';
+
+const DEFAULT_GEMINI_MODEL = 'gemini-flash-latest';
+const FALLBACK_GEMINI_MODEL = 'gemini-flash-latest';
+const MAX_BODY_BYTES = 64 * 1024;
+const MAX_MESSAGE_LENGTH = 4000;
+const MAX_HISTORY_MESSAGES = 10;
 
 const CHORDATA_SYSTEM_PROMPT = `Você é o "BioChordata — Assistente dos Cordados", um assistente de inteligência artificial especializado em Zoologia, Biologia Comparada e Evolução do Filo Chordata.
 
@@ -15,12 +21,13 @@ SUAS DIRETRIZES FUNDAMENTAIS:
    - As aves pertencem filogeneticamente à linhagem dos répteis arcossauros (são dinossauros terópodes aviários sobreviventes).
    - O anfioxo e a ascídia são cordados, mas NÃO são vertebrados (são protocordados).
    - Nem todo animal venenoso é peçonhento (peçonhentos inoculam ativamente; venenosos causam intoxicação passiva por ingestão/contato).
-5. Estrutura de Resposta: Organize a resposta com títulos breves em negrito, tópicos explicativos com marcadores e uma seção final com "Fontes recomendadas para consulta" (ex: IUCN Red List, Animal Diversity Web, ICMBio, Instituto Butantan).`;
+5. Estrutura de Resposta: Organize a resposta com títulos breves em negrito, tópicos explicativos com marcadores e uma seção final com "Fontes recomendadas para consulta" (ex: IUCN Red List, Animal Diversity Web, ICMBio, Instituto Butantan).
+6. Formatação: Use Markdown simples (negrito, listas e links). Não use HTML.`;
 
 // Local high-fidelity zoological knowledge base for fallback or augmentation
 const KNOWLEDGE_TOPICS = [
   {
-    keywords: ['característica', 'sinapomorfia', 'fundamentais', 'quatro', 'cinco', 'padrao', 'defina cordado'],
+    keywords: ['caracteristica', 'sinapomorfia', 'fundamentais', 'quatro', 'cinco', 'padrao', 'defina cordado', 'o que e um cordado'],
     title: 'As 5 Características Diagnósticas Fundamentais do Filo Chordata',
     content: `Todos os cordados compartilham cinco sinapomorfias em pelo menos uma fase do desenvolvimento ontogenético (geralmente embrionária ou larval):
 
@@ -31,7 +38,18 @@ const KNOWLEDGE_TOPICS = [
 5. **Cauda Pós-anal Muscular:** Extensão muscular que ultrapassa o ânus, fundamental para propulsão hidrodinâmica aquática e equilíbrio corporal em terra.`
   },
   {
-    keywords: ['diferenca', 'vertebrado', 'protocordado', 'craniata', 'cefalocordado', 'tunicado'],
+    keywords: ['notocorda', 'chorda', 'coluna vertebral', 'sustentacao'],
+    title: 'Notocorda: A Estrutura Embrionária Que Define os Cordados',
+    content: `A **notocorda** é um bastão flexível de células vacuolizadas envoltas por uma bainha de colágeno, localizado dorsalmente ao tubo digestório e ventralmente ao tubo nervoso.
+
+- **Origem embrionária:** Deriva do mesoderma axial (processo notocordal) e induz a formação do tubo neural e dos somitos.
+- **Função:** Sustentação hidrostática e ancoragem da musculatura axial durante a locomoção.
+- **Nos protocordados:** Permanece funcional por toda a vida (anfioxo) ou apenas na fase larval (ascídias).
+- **Nos vertebrados:** É gradualmente substituída pela coluna vertebral; nos adultos restam apenas remanescentes, como o núcleo pulposo dos discos intervertebrais.
+- **Importância evolutiva:** Sua presença é uma sinapomorfia (caráter derivado compartilhado) do filo Chordata.`
+  },
+  {
+    keywords: ['vertebrado', 'protocordado', 'craniata', 'cefalocordado', 'tunicado', 'urocordado', 'cordado e vertebrado', 'coluna vertebral'],
     title: 'Diferença entre Cordados e Vertebrados',
     content: `**Todo vertebrado é um cordado, mas nem todo cordado é um vertebrado!**
 
@@ -58,6 +76,21 @@ O Filo Chordata é subdividido em três grandes subfilos:
 - Por isso, no clado monofilético **Sauropsida**, as aves são répteis modificados que desenvolveram penas assimétricas, ossos pneumáticos, quilha esternal e endotermia para o voo.`
   },
   {
+    keywords: ['anfibio', 'anfibios', 'reptil', 'repteis', 'diferenca entre anfibios', 'pele', 'ovo amniotico'],
+    title: 'Anfíbios vs. Répteis: Principais Diferenças',
+    content: `Apesar de ambos incluírem tetrápodes, anfíbios e répteis diferem em pontos fundamentais:
+
+- **Pele:** Anfíbios têm pele úmida, permeável e rica em glândulas mucosas; répteis têm pele seca, queratinizada e com escamas.
+- **Respiração:** Anfíbios respiram pela pele e pelos pulmões (e por brânquias nas larvas); répteis respiram predominantemente pelos pulmões.
+- **Ovos:** Ovos de anfíbios não têm casca e dependem da água; ovos de répteis são amnióticos, com casca ou membranas protetoras.
+- **Reprodução:** Anfíbios geralmente apresentam metamorfose e fase larval aquática; répteis têm desenvolvimento direto, sem fase larval aquática.
+- **Termorregulação:** Ambos são ectotérmicos (exceto as aves, que são endotérmicas).
+- **Excreção:** Anfíbios excretam amônia (larvas) e ureia (adultos); répteis excretam ácido úrico, economizando água.
+
+- **Anfíbios** (sapos, rãs, pererecas, salamandras e cecílias) dependem de ambientes úmidos e são bioindicadores de qualidade ambiental.
+- **Répteis** (lagartos, serpentes, tartarugas, crocodilianos) conquistaram plenamente o ambiente terrestre graças ao ovo amniótico e à pele impermeável.`
+  },
+  {
     keywords: ['venenoso', 'peconhento', 'perigo', 'acidente', 'cobra', 'serpente', 'butantan', 'samu'],
     title: 'Cordados Perigosos: Animais Peçonhentos vs Venenosos e Primeiros Socorros',
     content: `**Diferença Crucial:**
@@ -71,7 +104,18 @@ O Filo Chordata é subdividido em três grandes subfilos:
 - **NUNCA:** Faça torniquetes/garrotes, não corte, não chupe o veneno e não aplique substâncias caseiras (borra de café, álcool ou folhas).`
   },
   {
-    keywords: ['evolucao', 'origem', 'cambriano', 'tetrapode', 'tiktaalik', 'fossil'],
+    keywords: ['ameacada', 'ameacadas', 'extincao', 'extinto', 'conservacao', 'iucn', 'risco', 'vulneravel'],
+    title: 'Conservação de Cordados Ameaçados de Extinção',
+    content: `Muitos cordados enfrentam risco de extinção devido à perda de habitat, poluição, caça ilegal e mudanças climáticas.
+
+- **Categorias da IUCN:** Extinta (EX), Extinta na Natureza (EW), Em Perigo Crítico (CR), Em Perigo (EN), Vulnerável (VU), Quase Ameaçada (NT) e Pouco Preocupante (LC).
+- **Exemplos brasileiros:** mico-leão-dourado (*Leontopithecus rosalia*), arara-azul-de-lear (*Anodorhynchus leari*), boto-cor-de-rosa (*Inia geoffrensis*), tartaruga-de-pente (*Eretmochelys imbricata*) e tubarão-lixa (*Ginglymostoma cirratum*).
+- **Principais ameaças:** desmatamento, fragmentação de habitats, tráfico de animais silvestres, sobrepesca, poluição plástica e aquecimento global.
+- **Ações de conservação:** criação de unidades de conservação, programas de reprodução em cativeiro, corredores ecológicos, fiscalização e educação ambiental.
+- **Importância ecológica:** cada espécie ocupa um papel nas teias tróficas; a perda de predadores de topo desestabiliza ecossistemas inteiros.`
+  },
+  {
+    keywords: ['evolucao', 'evoluir', 'evoluiram', 'origem', 'cambriano', 'tetrapode', 'tiktaalik', 'fossil', 'arvore da vida'],
     title: 'A Trajetória Evolutiva dos Cordados',
     content: `Principais marcos evolutivos ao longo do tempo geológico:
 1. **Cambriano (~535 Ma):** Surgimento dos cordados primitivos no mar (*Pikaia*, *Haikouichthys*).
@@ -82,12 +126,40 @@ O Filo Chordata é subdividido em três grandes subfilos:
   }
 ];
 
+/** Remove acentos e normaliza o texto para busca por palavras-chave. */
+function normalizeText(value) {
+  return String(value)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+}
+
+function sendJson(res, statusCode, payload) {
+  res.statusCode = statusCode;
+  res.setHeader('Cache-Control', 'no-store');
+  res.end(JSON.stringify(payload));
+}
+
+function sanitizeHistory(history) {
+  if (!Array.isArray(history)) return [];
+
+  return history
+    .filter((entry) => entry && typeof entry.content === 'string')
+    .slice(-MAX_HISTORY_MESSAGES)
+    .map((entry) => ({
+      role: entry.role === 'assistant' || entry.role === 'model' ? 'model' : 'user',
+      content: entry.content.trim().slice(0, MAX_MESSAGE_LENGTH)
+    }))
+    .filter((entry) => entry.content.length > 0);
+}
+
 export async function handleAIChat(req, res) {
   // Set CORS and JSON headers
-  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Cache-Control', 'no-store');
 
   if (req.method === 'OPTIONS') {
     res.statusCode = 204;
@@ -97,39 +169,58 @@ export async function handleAIChat(req, res) {
 
   if (req.method !== 'POST') {
     res.statusCode = 405;
-    res.end(JSON.stringify({ error: 'Método não permitido. Use POST.' }));
+    res.setHeader('Allow', 'POST, OPTIONS');
+    sendJson(res, 405, { error: 'Método não permitido. Use POST.' });
     return;
   }
 
   let body = '';
-  req.on('data', chunk => {
+  let bodyTooLarge = false;
+
+  req.on('data', (chunk) => {
+    if (bodyTooLarge) return;
     body += chunk;
+    if (Buffer.byteLength(body) > MAX_BODY_BYTES) {
+      bodyTooLarge = true;
+      sendJson(res, 413, { error: 'Requisição muito grande.' });
+      req.destroy();
+    }
+  });
+
+  req.on('error', (err) => {
+    console.error('Erro ao ler a requisição:', err.message);
   });
 
   req.on('end', async () => {
+    if (bodyTooLarge) return;
+
     try {
       const data = JSON.parse(body || '{}');
-      const userMessage = (data.message || '').trim();
-      const clientApiKey = data.apiKey;
+      const userMessage = typeof data.message === 'string' ? data.message.trim() : '';
+      const clientApiKey = typeof data.apiKey === 'string' ? data.apiKey.trim() : '';
 
       if (!userMessage) {
-        res.statusCode = 400;
-        res.end(JSON.stringify({ error: 'A mensagem da pergunta não pode estar vazia.' }));
+        sendJson(res, 400, { error: 'A mensagem da pergunta não pode estar vazia.' });
         return;
       }
 
-      const apiKey = process.env.GEMINI_API_KEY || clientApiKey;
+      if (userMessage.length > MAX_MESSAGE_LENGTH) {
+        sendJson(res, 413, { error: `A mensagem excede o limite de ${MAX_MESSAGE_LENGTH} caracteres.` });
+        return;
+      }
 
-      // If Gemini API Key is available, call Google Gemini 1.5 Flash endpoint
-      if (apiKey && apiKey.trim().length > 10) {
+      const history = sanitizeHistory(data.history);
+      const apiKey = (process.env.GEMINI_API_KEY || clientApiKey).trim();
+
+      // If a Gemini API key is available, call the Google Gemini endpoint
+      if (apiKey.length > 10) {
         try {
-          const geminiResponse = await callGeminiAPI(userMessage, data.history || [], apiKey);
-          res.statusCode = 200;
-          res.end(JSON.stringify({
+          const geminiResponse = await callGeminiAPI(userMessage, history, apiKey);
+          sendJson(res, 200, {
             reply: geminiResponse,
             source: 'gemini-api',
             status: 'success'
-          }));
+          });
           return;
         } catch (apiErr) {
           console.warn('Gemini API call failed, using high-precision local zoological engine:', apiErr.message);
@@ -139,50 +230,32 @@ export async function handleAIChat(req, res) {
 
       // High-precision local zoological reasoning engine
       const smartAnswer = generateSmartZoologicalResponse(userMessage);
-      res.statusCode = 200;
-      res.end(JSON.stringify({
+      sendJson(res, 200, {
         reply: smartAnswer,
         source: 'biochordata-core-engine',
         status: 'success'
-      }));
+      });
 
     } catch (err) {
       console.error('Error handling AI chat:', err);
-      res.statusCode = 500;
-      res.end(JSON.stringify({
-        error: 'Erro interno ao processar a resposta. Por favor, tente novamente.',
-        details: err.message
-      }));
+      sendJson(res, 500, {
+        error: 'Erro interno ao processar a resposta. Por favor, tente novamente.'
+      });
     }
   });
 }
 
-function callGeminiAPI(userMessage, history, apiKey) {
+function requestGeminiModel(model, postData, apiKey) {
   return new Promise((resolve, reject) => {
-    const contents = [
-      {
-        role: 'user',
-        parts: [{ text: `${CHORDATA_SYSTEM_PROMPT}\n\nPergunta do usuário: ${userMessage}` }]
-      }
-    ];
-
-    const postData = JSON.stringify({
-      contents,
-      generationConfig: {
-        temperature: 0.3,
-        maxOutputTokens: 1200,
-        topP: 0.95
-      }
-    });
-
     const options = {
       hostname: 'generativelanguage.googleapis.com',
       port: 443,
-      path: `/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      path: `/v1beta/models/${encodeURIComponent(model)}:generateContent`,
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(postData)
+        'Content-Length': Buffer.byteLength(postData),
+        'x-goog-api-key': apiKey
       }
     };
 
@@ -196,7 +269,10 @@ function callGeminiAPI(userMessage, history, apiKey) {
             reject(new Error(parsed.error.message || 'Gemini error'));
             return;
           }
-          const text = parsed?.candidates?.[0]?.content?.parts?.[0]?.text;
+          const text = parsed?.candidates?.[0]?.content?.parts
+            ?.map((part) => part.text || '')
+            .join('')
+            .trim();
           if (text) {
             resolve(text);
           } else {
@@ -209,7 +285,7 @@ function callGeminiAPI(userMessage, history, apiKey) {
     });
 
     req.on('error', (e) => reject(e));
-    req.setTimeout(12000, () => {
+    req.setTimeout(20000, () => {
       req.destroy();
       reject(new Error('Timeout de requisição com a API'));
     });
@@ -219,32 +295,82 @@ function callGeminiAPI(userMessage, history, apiKey) {
   });
 }
 
-function generateSmartZoologicalResponse(question) {
-  const qLower = question.toLowerCase();
-
-  // Search match in specialized knowledge
-  for (const topic of KNOWLEDGE_TOPICS) {
-    const match = topic.keywords.some(kw => qLower.includes(kw));
-    if (match) {
-      return `### ${topic.title}\n\n${topic.content}\n\n---\n**Fontes Científicas Recomendadas:**\n- [Animal Diversity Web (ADW)](https://animaldiversity.org)\n- [IUCN Red List](https://www.iucnredlist.org)\n- [Instituto Butantan](https://butantan.gov.br)`;
+async function callGeminiAPI(userMessage, history, apiKey) {
+  const contents = [
+    ...history.map((entry) => ({
+      role: entry.role,
+      parts: [{ text: entry.content }]
+    })),
+    {
+      role: 'user',
+      parts: [{ text: userMessage }]
     }
+  ];
+
+  const postData = JSON.stringify({
+    systemInstruction: {
+      parts: [{ text: CHORDATA_SYSTEM_PROMPT }]
+    },
+    contents,
+    generationConfig: {
+      temperature: 0.3,
+      maxOutputTokens: 1200,
+      topP: 0.95
+    }
+  });
+
+  const configuredModel = (process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL).trim();
+
+  try {
+    return await requestGeminiModel(configuredModel, postData, apiKey);
+  } catch (err) {
+    const modelUnavailable = /no longer available|not found|not supported|does not exist/i.test(err.message || '');
+    if (!modelUnavailable || configuredModel === FALLBACK_GEMINI_MODEL) {
+      throw err;
+    }
+    console.warn(`Modelo "${configuredModel}" indisponível. Tentando "${FALLBACK_GEMINI_MODEL}".`);
+    return requestGeminiModel(FALLBACK_GEMINI_MODEL, postData, apiKey);
+  }
+}
+
+function generateSmartZoologicalResponse(question) {
+  const qLower = normalizeText(question);
+
+  // Pick the topic with the most keyword matches instead of the first hit,
+  // otherwise broad words (e.g. "répteis") can hijack a more specific question.
+  let bestTopic = null;
+  let bestScore = 0;
+
+  for (const topic of KNOWLEDGE_TOPICS) {
+    const score = topic.keywords.reduce(
+      (total, kw) => (qLower.includes(normalizeText(kw)) ? total + 1 : total),
+      0
+    );
+    if (score > bestScore) {
+      bestScore = score;
+      bestTopic = topic;
+    }
+  }
+
+  if (bestTopic) {
+    return `### ${bestTopic.title}\n\n${bestTopic.content}\n\n---\n**Fontes Científicas Recomendadas:**\n- [Animal Diversity Web (ADW)](https://animaldiversity.org)\n- [IUCN Red List](https://www.iucnredlist.org)\n- [Instituto Butantan](https://butantan.gov.br)`;
   }
 
   // Specific species queries
   if (qLower.includes('anfioxo') || qLower.includes('branchiostoma')) {
     return `### O Anfioxo (*Branchiostoma lanceolatum*) e sua Relevância Científica
 
-O anfioxo é o mais clássico representante do subfilo **Cephalochordata**. 
+O anfioxo é o mais clássico representante do subfilo **Cephalochordata**.
 
 - **Anatomia:** Possui cerca de 5 a 7 cm de comprimento, corpo translúcido pisciforme, sem crânio, sem mandíbulas e sem coluna vertebral verdadeira.
-- **Sinapomorfias:** Conserva por toda a vida adulta as características fundamentais: notocorda funcional até a ponta cefálica, tubo nervoso dorsal tubular, fendas branquiais e cauda pós-anal.
+- **Sinapomorfias:** Conserva por toda a vida adulta as cinco características fundamentais: notocorda funcional até a ponta cefálica, tubo nervoso dorsal tubular, fendas branquiais, endóstilo e cauda pós-anal.
 - **Importância em Biologia:** É o organismo modelo padrão para estudos de embriologia comparada e biologia do desenvolvimento (Evo-Devo), pois representa a arquitetura corporal basal a partir da qual os vertebrados se originaram.
 
 ---
 **Fonte:** [WoRMS - Branchiostoma](https://www.marinespecies.org)`;
   }
 
-  if (qLower.includes('onça') || qLower.includes('panthera onca')) {
+  if (qLower.includes('onca') || qLower.includes('panthera onca')) {
     return `### Onça-Pintada (*Panthera onca*): O Maior Felino das Américas
 
 - **Classificação:** Classe Mammalia, Ordem Carnivora, Família Felidae.

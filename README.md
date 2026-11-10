@@ -61,8 +61,9 @@ O site organiza-se estritamente na seguinte sequência didática:
 
 O portal conta com um backend seguro integrado ao servidor Vite (`/api/chat`):
 
-- **Motor Central Especializado:** Processa requisições através de um motor de busca semântica em base de dados zoológica integrada com mais de uma centena de tópicos, garantindo respostas ricas, precisas e em português do Brasil sem alucinações.
-- **Suporte Nativo a Google Gemini 1.5 Flash:** Se a variável de ambiente `GEMINI_API_KEY` estiver configurada no servidor ou se o usuário informar sua própria chave através do modal de configurações (ícone de chave), o backend efetua chamadas diretas e seguras para a API do Google Gemini, protegendo credenciais contra exposição no frontend.
+- **Motor Central Especializado:** Quando não há chave configurada (ou a API falha), as respostas vêm de um motor local de recuperação de conhecimento com uma base curada de tópicos zoológicos, em português do Brasil. Ele cobre as características dos cordados, filogenia, grupos, conservação e animais peçonhentos, mas não substitui uma IA generativa.
+- **Suporte Nativo a Google Gemini Flash:** Se a variável de ambiente `GEMINI_API_KEY` estiver configurada no servidor ou se o usuário informar sua própria chave através do modal de configurações (ícone de chave), o backend efetua chamadas diretas e seguras para a API do Google Gemini, protegendo credenciais contra exposição no frontend. O modelo pode ser alterado com `GEMINI_MODEL` (padrão: `gemini-flash-latest`, com fallback automático caso o modelo configurado seja descontinuado).
+- **Histórico de Conversa:** As últimas mensagens do diálogo são enviadas ao Gemini como contexto, junto com as instruções de sistema do assistente.
 
 ---
 
@@ -79,13 +80,14 @@ O portal conta com um backend seguro integrado ao servidor Vite (`/api/chat`):
 ## 🚀 Instalação e Execução
 
 ### Pré-requisitos
-- [Node.js](https://nodejs.org/) versão 18 ou superior.
+- [Node.js](https://nodejs.org/) `^20.19.0` ou `>=22.12.0` (exigência do Vite 8).
+- npm 10 ou superior.
 
 ### Passos de Instalação
 
 1. Clone ou acesse a pasta do projeto:
 ```bash
-cd c:\Users\Usuário\Downloads\Biologia
+cd biologia
 ```
 
 2. Instale as dependências:
@@ -117,11 +119,19 @@ O resultado será compilado na pasta `dist/`.
 O portal funciona **100% de fábrica** mesmo sem nenhuma chave de API externa, graças ao motor de conhecimento de cordados embutido no backend.
 
 Caso deseje ativar o modelo gerador completo **Google Gemini**:
-1. Crie um arquivo `.env` na raiz do projeto com o seguinte conteúdo:
+1. Copie o arquivo de exemplo e preencha a chave:
+   ```bash
+   cp .env.example .env
+   ```
    ```env
    GEMINI_API_KEY=sua_chave_aqui
+   GEMINI_MODEL=gemini-flash-latest
    ```
-2. Ou insira a chave diretamente na interface clicando no botão **"Chave Gemini"** no topo da caixa de chat do BioChordata AI.
+   Obtenha uma chave em [Google AI Studio](https://aistudio.google.com/apikey).
+2. **Reinicie o servidor** (`npm run dev`) após criar ou alterar o `.env`. As variáveis são lidas apenas na inicialização.
+3. Alternativamente, insira a chave diretamente na interface clicando no botão **"Chave Gemini"** no topo da caixa de chat do BioChordata AI. Ela é salva no `localStorage` do navegador e pode ser removida pelo mesmo modal.
+
+> 🔒 O arquivo `.env` está no `.gitignore` e nunca deve ser commitado. A chave do servidor não é enviada ao frontend.
 
 ---
 

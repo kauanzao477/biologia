@@ -16,17 +16,24 @@ import { FAQSection } from './components/FAQSection';
 import { SourcesSection } from './components/SourcesSection';
 import { Footer } from './components/Footer';
 import { FloatingAIWidget } from './components/FloatingAIWidget';
+import type { Species } from './types';
 
 export function App() {
   const [darkMode, setDarkMode] = useState<boolean>(() => {
-    const saved = localStorage.getItem('chordata_dark_mode');
-    if (saved !== null) {
-      return saved === 'true';
+    try {
+      const saved = localStorage.getItem('chordata_dark_mode');
+      if (saved !== null) {
+        return saved === 'true';
+      }
+    } catch {
+      // localStorage can be unavailable in private/restricted contexts.
     }
-    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    return window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false;
   });
 
   const [aiExternalPrompt, setAiExternalPrompt] = useState<string>('');
+  const [focusedSpecies, setFocusedSpecies] = useState<Species | null>(null);
 
   useEffect(() => {
     if (darkMode) {
@@ -34,38 +41,41 @@ export function App() {
     } else {
       document.documentElement.classList.remove('dark');
     }
-    localStorage.setItem('chordata_dark_mode', darkMode.toString());
+
+    try {
+      localStorage.setItem('chordata_dark_mode', darkMode.toString());
+    } catch {
+      // Persisting the preference is optional.
+    }
   }, [darkMode]);
 
   const handleOpenAIChat = (prompt?: string) => {
     if (prompt) {
       setAiExternalPrompt(prompt);
     }
-    const aiSection = document.getElementById('ia-assistente');
-    if (aiSection) {
-      aiSection.scrollIntoView({ behavior: 'smooth' });
-    }
+
+    document.getElementById('ia-assistente')?.scrollIntoView({ behavior: 'smooth' });
+    window.setTimeout(() => {
+      document.getElementById('biochordata-chat-input')?.focus({ preventScroll: true });
+    }, 450);
   };
 
   const handleOpenSearch = () => {
-    const catalogSection = document.getElementById('catalogo');
-    if (catalogSection) {
-      catalogSection.scrollIntoView({ behavior: 'smooth' });
-      const input = catalogSection.querySelector('input');
-      if (input) input.focus();
-    }
-  };
-
-  const handleNavigateTo = (sectionId: string) => {
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
+    document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth' });
+    window.setTimeout(() => {
+      document.getElementById('catalog-search')?.focus({ preventScroll: true });
+    }, 350);
   };
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans selection:bg-emerald-500 selection:text-white transition-colors duration-300">
-      
+      <a
+        href="#conteudo-principal"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:rounded-xl focus:bg-emerald-600 focus:text-white focus:font-semibold"
+      >
+        Pular para o conteúdo principal
+      </a>
+
       {/* Fixed Sticky Header Navigation */}
       <Navbar
         darkMode={darkMode}
@@ -74,11 +84,10 @@ export function App() {
         onOpenSearch={handleOpenSearch}
       />
 
-      <main>
+      <main id="conteudo-principal">
         {/* 1. Página Inicial / Hero */}
         <Hero
           onOpenAIChat={handleOpenAIChat}
-          onNavigateTo={handleNavigateTo}
         />
 
         {/* 2. O que são os cordados? & Características fundamentais */}
@@ -91,10 +100,13 @@ export function App() {
         <GroupsSection />
 
         {/* 5. Catálogo interativo de espécies */}
-        <SpeciesCatalog />
+        <SpeciesCatalog
+          focusSpecies={focusedSpecies}
+          onFocusHandled={() => setFocusedSpecies(null)}
+        />
 
         {/* 6. Galeria de fotografias */}
-        <PhotoGallery />
+        <PhotoGallery onSelectSpecies={setFocusedSpecies} />
 
         {/* 7. Habitats e distribuição geográfica */}
         <HabitatsSection />

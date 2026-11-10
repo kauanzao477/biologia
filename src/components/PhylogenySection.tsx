@@ -217,7 +217,7 @@ export const PhylogenySection: React.FC = () => {
           </div>
 
           {/* Active Node Detailed Card */}
-          <div className="mt-8 p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm animate-fadeIn">
+          <div className="mt-8 p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm animate-fade-in">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>

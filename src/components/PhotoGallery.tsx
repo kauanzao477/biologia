@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { speciesList } from '../data/speciesData';
 import type { Species } from '../types';
+import { useDialog } from '../hooks/useDialog';
 import { 
   Camera, 
   ZoomIn, 
@@ -14,7 +15,7 @@ interface PhotoGalleryProps {
   onSelectSpecies?: (species: Species) => void;
 }
 
-export const PhotoGallery: React.FC<PhotoGalleryProps> = () => {
+export const PhotoGallery: React.FC<PhotoGalleryProps> = ({ onSelectSpecies }) => {
   const [selectedGroup, setSelectedGroup] = useState<string>('Todos');
   const [activePhotoIndex, setActivePhotoIndex] = useState<number | null>(null);
 
@@ -27,19 +28,43 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = () => {
     return s.group === selectedGroup;
   });
 
-  const activeSpecies = activePhotoIndex !== null ? filteredPhotos[activePhotoIndex] : null;
+  const activeSpecies =
+    activePhotoIndex !== null ? filteredPhotos[activePhotoIndex] ?? null : null;
 
-  const handleNextPhoto = () => {
-    if (activePhotoIndex !== null) {
-      setActivePhotoIndex((activePhotoIndex + 1) % filteredPhotos.length);
-    }
-  };
+  const closeLightbox = useCallback(() => setActivePhotoIndex(null), []);
+  useDialog(activeSpecies !== null, closeLightbox);
 
-  const handlePrevPhoto = () => {
-    if (activePhotoIndex !== null) {
-      setActivePhotoIndex((activePhotoIndex - 1 + filteredPhotos.length) % filteredPhotos.length);
-    }
-  };
+  const handleNextPhoto = useCallback(() => {
+    setActivePhotoIndex((current) => {
+      if (current === null || filteredPhotos.length === 0) return current;
+      return (current + 1) % filteredPhotos.length;
+    });
+  }, [filteredPhotos.length]);
+
+  const handlePrevPhoto = useCallback(() => {
+    setActivePhotoIndex((current) => {
+      if (current === null || filteredPhotos.length === 0) return current;
+      return (current - 1 + filteredPhotos.length) % filteredPhotos.length;
+    });
+  }, [filteredPhotos.length]);
+
+  // Keyboard navigation for the lightbox.
+  useEffect(() => {
+    if (activePhotoIndex === null) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        handleNextPhoto();
+      } else if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        handlePrevPhoto();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activePhotoIndex, handleNextPhoto, handlePrevPhoto]);
 
   return (
     <section id="galeria" className="py-20 relative bg-slate-50/60 dark:bg-slate-900/40 border-t border-slate-200/60 dark:border-slate-800/60">
@@ -67,7 +92,10 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = () => {
             {groups.map((grp) => (
               <button
                 key={grp}
-                onClick={() => setSelectedGroup(grp)}
+                onClick={() => {
+                  setSelectedGroup(grp);
+                  setActivePhotoIndex(null);
+                }}
                 className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition ${
                   selectedGroup === grp
                     ? 'bg-teal-600 text-white shadow-md shadow-teal-600/30'
@@ -86,11 +114,22 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = () => {
             <div
               key={sp.id}
               onClick={() => setActivePhotoIndex(idx)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setActivePhotoIndex(idx);
+                }
+              }}
+              role="button"
+              tabIndex={0}
+              aria-label={`Ampliar foto de ${sp.commonName}`}
               className="group relative h-64 rounded-3xl overflow-hidden cursor-pointer shadow-md hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1.5 border border-slate-200/60 dark:border-slate-800/60 bg-slate-900"
             >
               <img
                 src={sp.imageUrl}
                 alt={sp.commonName}
+                width={600}
+                height={400}
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                 loading="lazy"
                 decoding="async"
@@ -123,11 +162,15 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = () => {
 
         {/* Lightbox Zoom Modal */}
         {activeSpecies && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md animate-fadeIn">
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md animate-fade-in"
+            onClick={closeLightbox}
+          >
             
             {/* Close */}
             <button
-              onClick={() => setActivePhotoIndex(null)}
+              onClick={closeLightbox}
+              aria-label="Fechar galeria"
               className="absolute top-5 right-5 z-20 p-2.5 rounded-full bg-slate-900/80 hover:bg-slate-900 text-white backdrop-blur-md transition"
             >
               <X className="w-6 h-6" />
@@ -135,7 +178,11 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = () => {
 
             {/* Prev Photo Arrow */}
             <button
-              onClick={handlePrevPhoto}
+              onClick={(e) => {
+                e.stopPropagation();
+                handlePrevPhoto();
+              }}
+              aria-label="Foto anterior"
               className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-slate-900/70 hover:bg-slate-900 text-white backdrop-blur-md transition hidden sm:flex items-center justify-center"
             >
               <ChevronLeft className="w-6 h-6" />
@@ -143,14 +190,24 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = () => {
 
             {/* Next Photo Arrow */}
             <button
-              onClick={handleNextPhoto}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleNextPhoto();
+              }}
+              aria-label="Próxima foto"
               className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-slate-900/70 hover:bg-slate-900 text-white backdrop-blur-md transition hidden sm:flex items-center justify-center"
             >
               <ChevronRight className="w-6 h-6" />
             </button>
 
             {/* Lightbox Content Container */}
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-4xl w-full max-h-[92vh] overflow-hidden flex flex-col text-white shadow-2xl">
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-label={`Fotografia de ${activeSpecies.commonName}`}
+              className="bg-slate-900 border border-slate-800 rounded-3xl max-w-4xl w-full max-h-[92vh] overflow-hidden flex flex-col text-white shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
               
               {/* Photo Area */}
               <div className="relative flex-1 bg-black flex items-center justify-center overflow-hidden min-h-[350px] max-h-[550px]">
@@ -189,10 +246,13 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = () => {
                 <div className="flex items-center gap-2 shrink-0">
                   <a
                     href="#catalogo"
-                    onClick={() => setActivePhotoIndex(null)}
+                    onClick={() => {
+                      onSelectSpecies?.(activeSpecies);
+                      setActivePhotoIndex(null);
+                    }}
                     className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs shadow-md transition flex items-center gap-1.5"
                   >
-                    <span>Ver no Catálogo</span>
+                    <span>Ver ficha no Catálogo</span>
                     <ExternalLink className="w-3.5 h-3.5" />
                   </a>
                 </div>

@@ -54,7 +54,7 @@ export const EvolutionSection: React.FC = () => {
           </div>
 
           {/* Active Milestone Card */}
-          <div className="p-6 sm:p-8 rounded-2xl bg-slate-900 text-white border border-slate-800 space-y-4 animate-fadeIn">
+          <div className="p-6 sm:p-8 rounded-2xl bg-slate-900 text-white border border-slate-800 space-y-4 animate-fade-in">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
               <div>
                 <span className="text-xs font-mono text-teal-400 uppercase tracking-widest font-bold">

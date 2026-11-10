@@ -13,7 +13,7 @@ export const speciesList: Species[] = [
     geographicDistribution: 'Oceano Atlântico, Mar Mediterrâneo e Mar do Norte',
     diet: 'Microfágico filtrador (fitoplâncton e diatomáceas)',
     keyCharacteristics: [
-      'Retém todas as quatro características clássicas dos cordados na fase adulta',
+      'Retém todas as cinco características clássicas dos cordados na fase adulta',
       'Corpo translúcido, pisciforme e lateralmente comprimido (5 a 7 cm)',
       'Ausência de crânio, encéfalo diferenciado ou vértebras verdadeiras',
       'Miótomos em formato de "V" visíveis ao longo do tronco'

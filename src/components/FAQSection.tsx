@@ -74,7 +74,7 @@ export const FAQSection: React.FC<FAQSectionProps> = ({ onAskAI }) => {
 
                 {/* Accordion Answer Body */}
                 {isOpen && (
-                  <div className="px-5 pb-5 pt-1 border-t border-slate-100 dark:border-slate-800/60 space-y-4 animate-fadeIn">
+                  <div className="px-5 pb-5 pt-1 border-t border-slate-100 dark:border-slate-800/60 space-y-4 animate-fade-in">
                     <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                       {item.answer}
                     </p>

@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { groupOverviews } from '../data/chordataInfo';
 import type { GroupOverview } from '../types';
+import { useDialog } from '../hooks/useDialog';
 import { 
   Layers, 
   ChevronRight, 
@@ -15,6 +16,12 @@ export const GroupsSection: React.FC = () => {
   const [selectedGroup, setSelectedGroup] = useState<GroupOverview | null>(null);
   const [showComparativeTable, setShowComparativeTable] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'Todos' | 'Protocordados' | 'Vertebrados'>('Todos');
+
+  const closeGroupModal = useCallback(() => setSelectedGroup(null), []);
+  const closeTableModal = useCallback(() => setShowComparativeTable(false), []);
+
+  useDialog(selectedGroup !== null, closeGroupModal);
+  useDialog(showComparativeTable, closeTableModal);
 
   const filteredGroups = groupOverviews.filter(g => {
     if (activeTab === 'Todos') return true;
@@ -79,6 +86,15 @@ export const GroupsSection: React.FC = () => {
             <div
               key={group.name}
               onClick={() => setSelectedGroup(group)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setSelectedGroup(group);
+                }
+              }}
+              role="button"
+              tabIndex={0}
+              aria-label={`Ver perfil do grupo ${group.name}`}
               className="group glass-panel rounded-3xl overflow-hidden border border-slate-200/80 dark:border-slate-800/80 shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1.5 cursor-pointer flex flex-col"
             >
               {/* Photo Banner with Gradient Overlay */}
@@ -86,6 +102,8 @@ export const GroupsSection: React.FC = () => {
                 <img
                   src={group.photoUrl}
                   alt={group.name}
+                  width={600}
+                  height={400}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                   loading="lazy"
                   decoding="async"
@@ -98,7 +116,7 @@ export const GroupsSection: React.FC = () => {
                     {group.category}
                   </span>
                   <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                    group.thermoregulation === 'Endotérmico'
+                    group.thermoregulation.includes('Endotérmico')
                       ? 'bg-rose-500/80 text-white'
                       : 'bg-cyan-500/80 text-white'
                   }`}>
@@ -156,12 +174,21 @@ export const GroupsSection: React.FC = () => {
 
         {/* Detailed Modal for Selected Group */}
         {selectedGroup && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn">
-            <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-800 shadow-2xl relative">
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in"
+            onClick={closeGroupModal}
+          >
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="group-dialog-title"
+              className="bg-white dark:bg-slate-900 rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-800 shadow-2xl relative"
+              onClick={(e) => e.stopPropagation()}
+            >
               
               {/* Close Button */}
               <button
-                onClick={() => setSelectedGroup(null)}
+                onClick={closeGroupModal}
                 aria-label="Fechar painel"
                 className="absolute top-4 right-4 z-10 p-2 rounded-full bg-slate-900/60 hover:bg-slate-900 text-white backdrop-blur-sm transition"
               >
@@ -187,7 +214,7 @@ export const GroupsSection: React.FC = () => {
                       {selectedGroup.thermoregulation}
                     </span>
                   </div>
-                  <h3 className="text-3xl font-bold font-heading">
+                  <h3 id="group-dialog-title" className="text-3xl font-bold font-heading">
                     {selectedGroup.name}
                   </h3>
                   <p className="text-sm font-mono text-emerald-300">
@@ -267,7 +294,7 @@ export const GroupsSection: React.FC = () => {
                 {/* Close action */}
                 <div className="pt-4 flex justify-end">
                   <button
-                    onClick={() => setSelectedGroup(null)}
+                    onClick={closeGroupModal}
                     className="px-6 py-2.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-semibold text-xs transition hover:opacity-90"
                   >
                     Fechar Detalhes
@@ -282,12 +309,21 @@ export const GroupsSection: React.FC = () => {
 
         {/* Full Comparative Table Modal */}
         {showComparativeTable && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn">
-            <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-6xl w-full max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-800 shadow-2xl p-6 sm:p-8">
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in"
+            onClick={closeTableModal}
+          >
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="comparative-table-title"
+              className="bg-white dark:bg-slate-900 rounded-3xl max-w-6xl w-full max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-800 shadow-2xl p-6 sm:p-8"
+              onClick={(e) => e.stopPropagation()}
+            >
               
               <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800 mb-6">
                 <div>
-                  <h3 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <h3 id="comparative-table-title" className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                     <TableProperties className="w-6 h-6 text-emerald-600" />
                     <span>Tabela Comparativa dos Cordados</span>
                   </h3>
@@ -297,7 +333,8 @@ export const GroupsSection: React.FC = () => {
                 </div>
 
                 <button
-                  onClick={() => setShowComparativeTable(false)}
+                  onClick={closeTableModal}
+                  aria-label="Fechar tabela comparativa"
                   className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-200 transition"
                 >
                   <X className="w-5 h-5" />
@@ -333,7 +370,7 @@ export const GroupsSection: React.FC = () => {
                         <td className="p-3.5 min-w-[180px]">{g.integument}</td>
                         <td className="p-3.5 min-w-[180px]">{g.respiration}</td>
                         <td className="p-3.5 whitespace-nowrap font-semibold">
-                          <span className={g.thermoregulation === 'Endotérmico' ? 'text-rose-500' : 'text-cyan-600 dark:text-cyan-400'}>
+                          <span className={g.thermoregulation.includes('Endotérmico') ? 'text-rose-500' : 'text-cyan-600 dark:text-cyan-400'}>
                             {g.thermoregulation}
                           </span>
                         </td>
@@ -346,7 +383,7 @@ export const GroupsSection: React.FC = () => {
 
               <div className="pt-6 flex justify-end">
                 <button
-                  onClick={() => setShowComparativeTable(false)}
+                  onClick={closeTableModal}
                   className="px-6 py-2.5 rounded-xl bg-emerald-600 text-white font-semibold text-xs shadow-md"
                 >
                   Fechar Tabela

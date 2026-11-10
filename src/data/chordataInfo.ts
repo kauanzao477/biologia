@@ -314,7 +314,7 @@ export const habitatsData: HabitatInfo[] = [
     ],
     examples: ['Pirarucu', 'Peixe-boi da Amazônia', 'Lontra', 'Poraquê (peixe-elétrico)'],
     nativeVsIntroducedAlert: 'A introdução de espécies exóticas como Tilápia, Carpa e Tucunaré em bacias fora de sua distribuição original provoca a predação de espécies nativas e competição voraz.',
-    imageUrl: 'https://images.unsplash.com/photo-1544551763-77ef2d0cf96c?auto=format&fit=crop&w=1000&q=80'
+    imageUrl: 'https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1000&q=80'
   },
   {
     id: 'florestas-tropicais',

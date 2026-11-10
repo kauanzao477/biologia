@@ -1,9 +1,49 @@
 @import "tailwindcss";
 
+/* Tailwind v4 uses prefers-color-scheme by default.
+   This project toggles a `.dark` class on <html>, so the variant must be
+   overridden explicitly or the theme button has no effect. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-heading: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+
+  --animate-fade-in: fade-in 0.25s ease-out both;
+  --animate-slide-down: slide-down 0.2s ease-out both;
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slide-down {
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
 @layer base {
   :root {
-    --font-heading: 'Outfit', sans-serif;
-    --font-sans: 'Plus Jakarta Sans', sans-serif;
+    color-scheme: light;
+    --font-heading: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+    --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+  }
+
+  .dark {
+    color-scheme: dark;
   }
 
   html {
@@ -18,6 +58,23 @@
 
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-heading);
+  }
+
+  :focus-visible {
+    outline: 2px solid #059669;
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
 

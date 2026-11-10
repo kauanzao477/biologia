@@ -10,7 +10,6 @@ import {
 
 interface HeroProps {
   onOpenAIChat: (prompt?: string) => void;
-  onNavigateTo?: (sectionId: string) => void;
 }
 
 export const Hero: React.FC<HeroProps> = ({ onOpenAIChat }) => {

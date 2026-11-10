@@ -1,6 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { speciesList } from '../data/speciesData';
 import type { Species, IUCNStatus, RiskLevel } from '../types';
+import { useDialog } from '../hooks/useDialog';
 import { 
   Search, 
   X, 
@@ -18,16 +19,27 @@ import {
 } from 'lucide-react';
 
 interface SpeciesCatalogProps {
-  initialSearchQuery?: string;
+  focusSpecies?: Species | null;
+  onFocusHandled?: () => void;
 }
 
-export const SpeciesCatalog: React.FC<SpeciesCatalogProps> = ({ initialSearchQuery = '' }) => {
-  const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
+export const SpeciesCatalog: React.FC<SpeciesCatalogProps> = ({
+  focusSpecies = null,
+  onFocusHandled
+}) => {
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedGroup, setSelectedGroup] = useState<string>('Todos');
   const [selectedConservation, setSelectedConservation] = useState<string>('Todos');
   const [selectedRisk, setSelectedRisk] = useState<string>('Todos');
   const [onlyBrazil, setOnlyBrazil] = useState<boolean>(false);
-  const [selectedSpecies, setSelectedSpecies] = useState<Species | null>(null);
+  const [activeSpecies, setSelectedSpecies] = useState<Species | null>(null);
+  const openSpecies = activeSpecies ?? focusSpecies;
+
+  const closeSpeciesModal = useCallback(() => {
+    setSelectedSpecies(null);
+    onFocusHandled?.();
+  }, [onFocusHandled]);
+  useDialog(openSpecies !== null, closeSpeciesModal);
 
   // Filter species
   const filteredSpecies = useMemo(() => {
@@ -76,7 +88,7 @@ export const SpeciesCatalog: React.FC<SpeciesCatalogProps> = ({ initialSearchQue
       case 'NT':
         return { label: 'NT • Quase Ameaçado', color: 'bg-lime-600 text-white' };
       case 'LC':
-        return { label: 'LC • Pouco Preocupante', color: 'bg-emerald-600 text-white' };
+        return { label: 'LC • Menor Preocupação', color: 'bg-emerald-600 text-white' };
       case 'DD':
         return { label: 'DD • Dados Insuficientes', color: 'bg-slate-500 text-white' };
       default:
@@ -116,8 +128,8 @@ export const SpeciesCatalog: React.FC<SpeciesCatalogProps> = ({ initialSearchQue
           </h2>
 
           <p className="text-slate-600 dark:text-slate-300 text-sm sm:text-base leading-relaxed">
-            Pesquise por nome popular ou científico e filtre por grupo zoológico, bioma, estado de conservação 
-            ou risco. Fichas auditadas com fotografia em alta resolução e dados fidedignos.
+            Pesquise por nome popular ou científico e filtre por grupo zoológico, estado de conservação,
+            faixa de risco ou pela fauna brasileira. Fichas com fotografia em alta resolução e dados fidedignos.
           </p>
         </div>
 
@@ -129,10 +141,12 @@ export const SpeciesCatalog: React.FC<SpeciesCatalogProps> = ({ initialSearchQue
             <div className="relative flex-1">
               <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
+                id="catalog-search"
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Pesquisar por nome popular (ex: Pirarucu, Axolote) ou científico..."
+                aria-label="Pesquisar espécies no catálogo"
                 className="w-full pl-10 pr-4 py-3 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
               />
               {searchQuery && (
@@ -271,6 +285,15 @@ export const SpeciesCatalog: React.FC<SpeciesCatalogProps> = ({ initialSearchQue
                 <div
                   key={sp.id}
                   onClick={() => setSelectedSpecies(sp)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setSelectedSpecies(sp);
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Abrir ficha de ${sp.commonName}`}
                   className="group glass-panel rounded-3xl overflow-hidden border border-slate-200/80 dark:border-slate-800/80 shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1.5 cursor-pointer flex flex-col"
                 >
                   {/* Photo Container */}
@@ -278,6 +301,8 @@ export const SpeciesCatalog: React.FC<SpeciesCatalogProps> = ({ initialSearchQue
                     <img
                       src={sp.imageUrl}
                       alt={sp.commonName}
+                      width={600}
+                      height={400}
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                       loading="lazy"
                       decoding="async"
@@ -337,13 +362,22 @@ export const SpeciesCatalog: React.FC<SpeciesCatalogProps> = ({ initialSearchQue
         )}
 
         {/* Detailed Species Modal Dialog */}
-        {selectedSpecies && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn">
-            <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-3xl w-full max-h-[92vh] overflow-y-auto border border-slate-200 dark:border-slate-800 shadow-2xl relative">
+        {openSpecies && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in"
+            onClick={closeSpeciesModal}
+          >
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="species-dialog-title"
+              className="bg-white dark:bg-slate-900 rounded-3xl max-w-3xl w-full max-h-[92vh] overflow-y-auto border border-slate-200 dark:border-slate-800 shadow-2xl relative"
+              onClick={(e) => e.stopPropagation()}
+            >
               
               {/* Close Button */}
               <button
-                onClick={() => setSelectedSpecies(null)}
+                onClick={closeSpeciesModal}
                 aria-label="Fechar ficha da espécie"
                 className="absolute top-4 right-4 z-10 p-2.5 rounded-full bg-slate-950/70 hover:bg-slate-950 text-white backdrop-blur-sm transition"
               >
@@ -353,8 +387,8 @@ export const SpeciesCatalog: React.FC<SpeciesCatalogProps> = ({ initialSearchQue
               {/* Modal Banner Photo */}
               <div className="relative h-72 sm:h-80 w-full bg-slate-950">
                 <img
-                  src={selectedSpecies.imageUrl}
-                  alt={selectedSpecies.commonName}
+                  src={openSpecies.imageUrl}
+                  alt={openSpecies.commonName}
                   className="w-full h-full object-cover"
                   decoding="async"
                 />
@@ -363,21 +397,21 @@ export const SpeciesCatalog: React.FC<SpeciesCatalogProps> = ({ initialSearchQue
                 <div className="absolute bottom-6 left-6 right-6 text-white space-y-2">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-500 text-white">
-                      {selectedSpecies.group}
+                      {openSpecies.group}
                     </span>
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${getIUCNBadge(selectedSpecies.conservationStatus).color}`}>
-                      {getIUCNBadge(selectedSpecies.conservationStatus).label}
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${getIUCNBadge(openSpecies.conservationStatus).color}`}>
+                      {getIUCNBadge(openSpecies.conservationStatus).label}
                     </span>
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${getRiskBadge(selectedSpecies.riskLevel).color}`}>
-                      {getRiskBadge(selectedSpecies.riskLevel).label}
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${getRiskBadge(openSpecies.riskLevel).color}`}>
+                      {getRiskBadge(openSpecies.riskLevel).label}
                     </span>
                   </div>
 
-                  <h3 className="text-3xl sm:text-4xl font-extrabold font-heading">
-                    {selectedSpecies.commonName}
+                  <h3 id="species-dialog-title" className="text-3xl sm:text-4xl font-extrabold font-heading">
+                    {openSpecies.commonName}
                   </h3>
                   <p className="text-base font-mono text-emerald-300">
-                    {selectedSpecies.scientificName} • {selectedSpecies.classOrClade}
+                    {openSpecies.scientificName} • {openSpecies.classOrClade}
                   </p>
                 </div>
               </div>
@@ -386,9 +420,9 @@ export const SpeciesCatalog: React.FC<SpeciesCatalogProps> = ({ initialSearchQue
               <div className="p-6 sm:p-8 space-y-6 text-sm text-slate-700 dark:text-slate-300">
                 
                 {/* Photo credits */}
-                {selectedSpecies.imageAuthor && (
+                {openSpecies.imageAuthor && (
                   <div className="text-[11px] text-slate-400 font-mono">
-                    Foto: {selectedSpecies.imageAuthor} | Licença: {selectedSpecies.imageLicense || 'Uso Educativo'}
+                    Foto: {openSpecies.imageAuthor} | Licença: {openSpecies.imageLicense || 'Uso Educativo'}
                   </div>
                 )}
 
@@ -399,7 +433,7 @@ export const SpeciesCatalog: React.FC<SpeciesCatalogProps> = ({ initialSearchQue
                     <span>Características Marcantes</span>
                   </h4>
                   <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {selectedSpecies.keyCharacteristics.map((char, i) => (
+                    {openSpecies.keyCharacteristics.map((char, i) => (
                       <li key={i} className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 text-xs flex items-start gap-2">
                         <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
                         <span>{char}</span>
@@ -414,35 +448,35 @@ export const SpeciesCatalog: React.FC<SpeciesCatalogProps> = ({ initialSearchQue
                     <strong className="text-slate-900 dark:text-white block mb-1">
                       Habitat Típico
                     </strong>
-                    <p className="text-xs sm:text-sm">{selectedSpecies.habitat}</p>
+                    <p className="text-xs sm:text-sm">{openSpecies.habitat}</p>
                   </div>
 
                   <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800">
                     <strong className="text-slate-900 dark:text-white block mb-1">
                       Distribuição Geográfica
                     </strong>
-                    <p className="text-xs sm:text-sm">{selectedSpecies.geographicDistribution}</p>
+                    <p className="text-xs sm:text-sm">{openSpecies.geographicDistribution}</p>
                   </div>
 
                   <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800">
                     <strong className="text-slate-900 dark:text-white block mb-1">
                       Alimentação
                     </strong>
-                    <p className="text-xs sm:text-sm">{selectedSpecies.diet}</p>
+                    <p className="text-xs sm:text-sm">{openSpecies.diet}</p>
                   </div>
 
                   <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800">
                     <strong className="text-slate-900 dark:text-white block mb-1">
                       Papel Ecológico
                     </strong>
-                    <p className="text-xs sm:text-sm">{selectedSpecies.ecologicalRole}</p>
+                    <p className="text-xs sm:text-sm">{openSpecies.ecologicalRole}</p>
                   </div>
                 </div>
 
                 {/* Risk and Safety Guidance */}
-                {selectedSpecies.riskDescription && (
+                {openSpecies.riskDescription && (
                   <div className={`p-4 rounded-2xl border text-xs sm:text-sm space-y-1.5 ${
-                    selectedSpecies.riskLevel === 'Peçonhento' 
+                    openSpecies.riskLevel === 'Peçonhento' 
                       ? 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/60 text-red-950 dark:text-red-200'
                       : 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900/60 text-amber-950 dark:text-amber-200'
                   }`}>
@@ -450,11 +484,11 @@ export const SpeciesCatalog: React.FC<SpeciesCatalogProps> = ({ initialSearchQue
                       <AlertTriangle className="w-4 h-4 text-amber-600" />
                       <span>Relação com os Seres Humanos & Risco:</span>
                     </div>
-                    <p>{selectedSpecies.riskDescription}</p>
-                    {selectedSpecies.firstAidAdvice && (
+                    <p>{openSpecies.riskDescription}</p>
+                    {openSpecies.firstAidAdvice && (
                       <div className="pt-2 border-t border-amber-200/60 dark:border-amber-900/40">
                         <strong>Primeiros Socorros / Conduta: </strong>
-                        <span>{selectedSpecies.firstAidAdvice}</span>
+                        <span>{openSpecies.firstAidAdvice}</span>
                       </div>
                     )}
                   </div>
@@ -467,7 +501,7 @@ export const SpeciesCatalog: React.FC<SpeciesCatalogProps> = ({ initialSearchQue
                     <span>Curiosidades Científicas</span>
                   </h4>
                   <div className="space-y-2">
-                    {selectedSpecies.curiosities.map((cur, i) => (
+                    {openSpecies.curiosities.map((cur, i) => (
                       <p key={i} className="p-3.5 rounded-xl bg-teal-50/60 dark:bg-teal-950/20 border border-teal-200 dark:border-teal-900/50 text-xs sm:text-sm text-teal-950 dark:text-teal-200">
                         {cur}
                       </p>
@@ -481,7 +515,7 @@ export const SpeciesCatalog: React.FC<SpeciesCatalogProps> = ({ initialSearchQue
                     Fontes Científicas Verificadas:
                   </span>
                   <div className="flex flex-wrap gap-2">
-                    {selectedSpecies.sourceReferences.map((ref, idx) => (
+                    {openSpecies.sourceReferences.map((ref, idx) => (
                       <a
                         key={idx}
                         href={ref.url}
@@ -499,7 +533,7 @@ export const SpeciesCatalog: React.FC<SpeciesCatalogProps> = ({ initialSearchQue
                 {/* Modal close */}
                 <div className="pt-4 flex justify-end">
                   <button
-                    onClick={() => setSelectedSpecies(null)}
+                    onClick={closeSpeciesModal}
                     className="px-6 py-2.5 rounded-xl bg-emerald-600 text-white font-semibold text-xs shadow-md hover:bg-emerald-500 transition"
                   >
                     Fechar Ficha

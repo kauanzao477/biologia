@@ -8,7 +8,19 @@
     <meta name="description" content="Portal científico e educativo sobre o filo Chordata: anatomia, evolução, árvore filogenética, catálogo de espécies, habitats, perigos e assistente de IA BioChordata." />
     <meta name="keywords" content="Chordata, cordados, biologia, zoologia, vertebrados, anfioxo, tunicados, peixes, anfíbios, répteis, aves, mamíferos, evolução, filogenia" />
     <meta name="author" content="Plataforma Educativa Chordata" />
-    
+    <meta name="theme-color" content="#059669" />
+
+    <!-- Aplica o tema salvo antes da primeira pintura para evitar flash de tema -->
+    <script>
+      (function () {
+        try {
+          var saved = localStorage.getItem('chordata_dark_mode');
+          var dark = saved === 'true' || (saved === null && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          if (dark) document.documentElement.classList.add('dark');
+        } catch (e) { /* localStorage indisponível */ }
+      })();
+    </script>
+
     <!-- Open Graph / Meta Social -->
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Chordata — Explorando o Mundo dos Cordados" />
