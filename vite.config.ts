@@ -42,6 +42,8 @@ export default defineConfig(({ mode }) => {
     process.env.GEMINI_MODEL = env.GEMINI_MODEL;
   }
 
+  console.log(`[BioChordata] Modelo Gemini: ${process.env.GEMINI_MODEL || 'gemini-3.8-flash (padrão)'}`);
+
   return {
     plugins: [
       tailwindcss(),

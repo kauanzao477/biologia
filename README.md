@@ -62,7 +62,7 @@ O site organiza-se estritamente na seguinte sequência didática:
 O portal conta com um backend seguro integrado ao servidor Vite (`/api/chat`):
 
 - **Motor Central Especializado:** Quando não há chave configurada (ou a API falha), as respostas vêm de um motor local de recuperação de conhecimento com uma base curada de tópicos zoológicos, em português do Brasil. Ele cobre as características dos cordados, filogenia, grupos, conservação e animais peçonhentos, mas não substitui uma IA generativa.
-- **Suporte Nativo a Google Gemini:** Se a variável de ambiente `GEMINI_API_KEY` estiver configurada no servidor ou se o usuário informar sua própria chave através do modal de configurações (ícone de chave), o backend efetua chamadas diretas e seguras para a API do Google Gemini, protegendo credenciais contra exposição no frontend. O modelo padrão é `gemini-3.8-flash` (configurável via `GEMINI_MODEL`), com fallback automático para `gemini-3.5-flash-lite` quando a API retorna erro de cota (HTTP 429).
+- **Suporte Nativo a Google Gemini:** Se a variável de ambiente `GEMINI_API_KEY` estiver configurada no servidor ou se o usuário informar sua própria chave através do modal de configurações (ícone de chave), o backend efetua chamadas diretas e seguras para a API do Google Gemini, protegendo credenciais contra exposição no frontend. O modelo padrão é `gemini-3.8-flash` (configurável via `GEMINI_MODEL`), com fallback automático para `gemini-3.5-flash-lite` quando a API retorna erro de cota ou indisponibilidade temporária (HTTP 429/503).
 - **Histórico de Conversa:** As últimas mensagens do diálogo são enviadas ao Gemini como contexto, junto com as instruções de sistema do assistente.
 
 ---
@@ -74,6 +74,7 @@ O portal conta com um backend seguro integrado ao servidor Vite (`/api/chat`):
 - **Ícones:** Lucide React
 - **Tipografia:** Google Fonts (*Outfit* e *Plus Jakarta Sans*)
 - **Backend / API:** Middleware seguro em Node.js / Connect acoplado ao Vite (`server/aiHandler.js`)
+- **IA:** SDK oficial `@google/generative-ai` com o modelo `gemini-3.8-flash` (fallback para `gemini-3.5-flash-lite` em HTTP 429/503)
 
 ---
 

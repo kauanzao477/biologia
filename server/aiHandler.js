@@ -1,12 +1,28 @@
 // Backend AI Handler for BioChordata
-// Integrates directly with the Google Gemini REST API (no SDK dependency),
-// using POST /v1beta/models/{model}:generateContent when a key is configured.
-// Falls back to a rich zoological knowledge-retrieval engine for Chordata topics.
+// Uses the official Google Generative AI SDK (@google/generative-ai) when a
+// key is configured. Falls back to a rich zoological knowledge-retrieval
+// engine for Chordata topics when the API is unavailable or out of quota.
 
-import https from 'node:https';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const DEFAULT_GEMINI_MODEL = 'gemini-3.8-flash';
 const FALLBACK_GEMINI_MODEL = 'gemini-3.5-flash-lite';
+const LEGACY_GEMINI_MODEL = /^(gemini-(?:1\.|2\.(?:0|5))|gemini-flash-latest$)/i;
+
+function resolveGeminiModel() {
+  const configured = (process.env.GEMINI_MODEL || '').trim();
+
+  if (!configured) return DEFAULT_GEMINI_MODEL;
+
+  if (LEGACY_GEMINI_MODEL.test(configured)) {
+    console.warn(
+      `Modelo Gemini obsoleto configurado ("${configured}"). Usando "${DEFAULT_GEMINI_MODEL}".`
+    );
+    return DEFAULT_GEMINI_MODEL;
+  }
+
+  return configured;
+}
 const MAX_BODY_BYTES = 64 * 1024;
 const MAX_MESSAGE_LENGTH = 4000;
 const MAX_HISTORY_MESSAGES = 10;
@@ -295,82 +311,40 @@ export async function handleAIChat(req, res) {
   });
 }
 
-function requestGeminiModel(model, postData, apiKey) {
-  return new Promise((resolve, reject) => {
-    const options = {
-      hostname: 'generativelanguage.googleapis.com',
-      port: 443,
-      path: `/v1beta/models/${encodeURIComponent(model)}:generateContent`,
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(postData),
-        'x-goog-api-key': apiKey
-      }
-    };
+function createGeminiModel(apiKey, modelName) {
+  const genAI = new GoogleGenerativeAI(apiKey);
 
-    const req = https.request(options, (res) => {
-      let responseBody = '';
-      res.on('data', chunk => { responseBody += chunk; });
-      res.on('end', () => {
-        let parsed;
-
-        try {
-          parsed = JSON.parse(responseBody);
-        } catch {
-          const parseError = new Error('Resposta inválida da API Gemini.');
-          parseError.statusCode = res.statusCode;
-          reject(parseError);
-          return;
-        }
-
-        if (parsed.error) {
-          const apiError = new Error(parsed.error.message || 'Gemini error');
-          apiError.statusCode = res.statusCode;
-          apiError.apiStatus = parsed.error.status;
-          reject(apiError);
-          return;
-        }
-
-        if (res.statusCode >= 400) {
-          const httpError = new Error(`Erro HTTP ${res.statusCode} na API Gemini.`);
-          httpError.statusCode = res.statusCode;
-          reject(httpError);
-          return;
-        }
-
-        const text = parsed?.candidates?.[0]?.content?.parts
-          ?.map((part) => part.text || '')
-          .join('')
-          .trim();
-
-        if (text) {
-          resolve(text);
-        } else {
-          const emptyError = new Error('Formato inesperado na resposta da API Gemini.');
-          emptyError.statusCode = res.statusCode;
-          reject(emptyError);
-        }
-      });
-    });
-
-    req.on('error', (e) => reject(e));
-    req.setTimeout(20000, () => {
-      req.destroy();
-      reject(new Error('Timeout de requisição com a API'));
-    });
-
-    req.write(postData);
-    req.end();
+  return genAI.getGenerativeModel({
+    model: modelName,
+    systemInstruction: CHORDATA_SYSTEM_PROMPT,
+    generationConfig: {
+      temperature: 0.3,
+      maxOutputTokens: 1200,
+      topP: 0.95
+    }
   });
 }
 
-function isQuotaExceededError(err) {
+function isFallbackEligibleError(err) {
+  const status = err?.status ?? err?.statusCode;
+
   return (
-    err?.statusCode === 429 ||
+    [429, 500, 502, 503, 504].includes(status) ||
     err?.apiStatus === 'RESOURCE_EXHAUSTED' ||
-    /quota|rate limit/i.test(err?.message || '')
+    /429|500|502|503|504|quota|rate limit|resource_exhausted|high demand|service unavailable|overloaded/i.test(err?.message || '')
   );
+}
+
+async function generateWithGeminiModel(modelName, contents, apiKey) {
+  const model = createGeminiModel(apiKey, modelName);
+  const result = await model.generateContent({ contents });
+  const text = result.response.text().trim();
+
+  if (!text) {
+    throw new Error('Formato inesperado na resposta da API Gemini.');
+  }
+
+  return text;
 }
 
 async function callGeminiAPI(userMessage, history, apiKey) {
@@ -385,29 +359,21 @@ async function callGeminiAPI(userMessage, history, apiKey) {
     }
   ];
 
-  const postData = JSON.stringify({
-    systemInstruction: {
-      parts: [{ text: CHORDATA_SYSTEM_PROMPT }]
-    },
-    contents,
-    generationConfig: {
-      temperature: 0.3,
-      maxOutputTokens: 1200,
-      topP: 0.95
-    }
-  });
-
-  const configuredModel = (process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL).trim();
+  const configuredModel = resolveGeminiModel();
 
   try {
-    return await requestGeminiModel(configuredModel, postData, apiKey);
+    return await generateWithGeminiModel(configuredModel, contents, apiKey);
   } catch (err) {
-    if (!isQuotaExceededError(err) || configuredModel === FALLBACK_GEMINI_MODEL) {
+    if (!isFallbackEligibleError(err) || configuredModel === FALLBACK_GEMINI_MODEL) {
       throw err;
     }
 
-    console.warn(`Cota excedida no modelo "${configuredModel}" (HTTP 429). Tentando "${FALLBACK_GEMINI_MODEL}".`);
-    return requestGeminiModel(FALLBACK_GEMINI_MODEL, postData, apiKey);
+    const status = err?.status ?? err?.statusCode ?? 'sem status';
+    console.warn(
+      `Gemini "${configuredModel}" indisponível (HTTP ${status}). Tentando fallback "${FALLBACK_GEMINI_MODEL}".`
+    );
+
+    return generateWithGeminiModel(FALLBACK_GEMINI_MODEL, contents, apiKey);
   }
 }
 
