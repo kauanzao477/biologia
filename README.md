@@ -62,7 +62,7 @@ O site organiza-se estritamente na seguinte sequência didática:
 O portal conta com um backend seguro integrado ao servidor Vite (`/api/chat`):
 
 - **Motor Central Especializado:** Quando não há chave configurada (ou a API falha), as respostas vêm de um motor local de recuperação de conhecimento com uma base curada de tópicos zoológicos, em português do Brasil. Ele cobre as características dos cordados, filogenia, grupos, conservação e animais peçonhentos, mas não substitui uma IA generativa.
-- **Suporte Nativo a Google Gemini Flash:** Se a variável de ambiente `GEMINI_API_KEY` estiver configurada no servidor ou se o usuário informar sua própria chave através do modal de configurações (ícone de chave), o backend efetua chamadas diretas e seguras para a API do Google Gemini, protegendo credenciais contra exposição no frontend. O modelo pode ser alterado com `GEMINI_MODEL` (padrão: `gemini-flash-latest`, com fallback automático caso o modelo configurado seja descontinuado).
+- **Suporte Nativo a Google Gemini:** Se a variável de ambiente `GEMINI_API_KEY` estiver configurada no servidor ou se o usuário informar sua própria chave através do modal de configurações (ícone de chave), o backend efetua chamadas diretas e seguras para a API do Google Gemini, protegendo credenciais contra exposição no frontend. O modelo padrão é `gemini-3.8-flash` (configurável via `GEMINI_MODEL`), com fallback automático para `gemini-3.5-flash-lite` quando a API retorna erro de cota (HTTP 429).
 - **Histórico de Conversa:** As últimas mensagens do diálogo são enviadas ao Gemini como contexto, junto com as instruções de sistema do assistente.
 
 ---
@@ -125,7 +125,7 @@ Caso deseje ativar o modelo gerador completo **Google Gemini**:
    ```
    ```env
    GEMINI_API_KEY=sua_chave_aqui
-   GEMINI_MODEL=gemini-flash-latest
+   GEMINI_MODEL=gemini-3.8-flash
    ```
    Obtenha uma chave em [Google AI Studio](https://aistudio.google.com/apikey).
 2. **Reinicie o servidor** (`npm run dev`) após criar ou alterar o `.env`. As variáveis são lidas apenas na inicialização.

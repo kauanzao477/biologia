@@ -1,11 +1,12 @@
 // Backend AI Handler for BioChordata
-// Integrates with the Google Gemini API when a key is configured,
-// and features a rich zoological knowledge-retrieval engine for Chordata topics.
+// Integrates directly with the Google Gemini REST API (no SDK dependency),
+// using POST /v1beta/models/{model}:generateContent when a key is configured.
+// Falls back to a rich zoological knowledge-retrieval engine for Chordata topics.
 
 import https from 'node:https';
 
-const DEFAULT_GEMINI_MODEL = 'gemini-flash-latest';
-const FALLBACK_GEMINI_MODEL = 'gemini-flash-latest';
+const DEFAULT_GEMINI_MODEL = 'gemini-3.8-flash';
+const FALLBACK_GEMINI_MODEL = 'gemini-3.5-flash-lite';
 const MAX_BODY_BYTES = 64 * 1024;
 const MAX_MESSAGE_LENGTH = 4000;
 const MAX_HISTORY_MESSAGES = 10;
@@ -49,7 +50,7 @@ const KNOWLEDGE_TOPICS = [
 - **Importância evolutiva:** Sua presença é uma sinapomorfia (caráter derivado compartilhado) do filo Chordata.`
   },
   {
-    keywords: ['vertebrado', 'protocordado', 'craniata', 'cefalocordado', 'tunicado', 'urocordado', 'cordado e vertebrado', 'coluna vertebral'],
+    keywords: ['vertebrado', 'protocordado', 'craniata', 'cefalocordado', 'tunicado', 'urocordado', 'cordado e vertebrado', 'coluna vertebral', 'todo cordado', 'tem coluna vertebral', 'possui coluna vertebral'],
     title: 'Diferença entre Cordados e Vertebrados',
     content: `**Todo vertebrado é um cordado, mas nem todo cordado é um vertebrado!**
 
@@ -133,6 +134,55 @@ function normalizeText(value) {
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase();
 }
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * Matches a whole word or phrase instead of a raw substring.
+ * Also accepts common Portuguese plural forms, so "característica" matches
+ * "características" while "chorda" still does not match "chordata".
+ */
+function keywordMatches(normalizedText, keyword) {
+  const base = normalizeText(keyword).trim();
+  if (!base) return false;
+
+  const forms = new Set([base, `${base}s`, `${base}es`]);
+
+  if (base.endsWith('il') || base.endsWith('el')) {
+    forms.add(`${base.slice(0, -2)}eis`);
+  } else if (base.endsWith('ol')) {
+    forms.add(`${base.slice(0, -2)}ois`);
+  } else if (base.endsWith('ul')) {
+    forms.add(`${base.slice(0, -2)}uis`);
+  } else if (base.endsWith('l')) {
+    forms.add(`${base.slice(0, -1)}is`);
+  } else if (base.endsWith('m')) {
+    forms.add(`${base.slice(0, -1)}ns`);
+  } else if (base.endsWith('ao')) {
+    forms.add(`${base.slice(0, -2)}oes`);
+  }
+
+  return [...forms].some((form) => {
+    const pattern = new RegExp(
+      `(^|[^a-z0-9])${escapeRegExp(form)}($|[^a-z0-9])`
+    );
+    return pattern.test(normalizedText);
+  });
+}
+
+const CHORDATA_VS_CORDADOS_ANSWER = `### Chordata e "cordados": qual é a diferença?
+
+**Nenhuma: são a mesma coisa.** "Chordata" é o nome científico (latim) do filo, e "cordados" é o nome popular em português para os animais desse filo.
+
+- **Chordata** é o táxon formal (Filo Chordata), usado na classificação biológica.
+- **Cordados** é o termo em português; não é um grupo diferente nem uma categoria inferior.
+- O filo reúne os **protocordados** (cefalocordados e tunicados) e os **vertebrados** (peixes, anfíbios, répteis, aves e mamíferos).
+- O nome deriva da **notocorda**, estrutura embrionária presente em todos os cordados em alguma fase da vida.
+- Portanto, dizer "Chordata" ou "cordados" é equivalente: o primeiro é mais técnico e o segundo, mais didático.
+
+> Não confunda o filo **Chordata** (o grupo de animais) com a **notocorda** (uma estrutura anatômica presente nesses animais).`;
 
 function sendJson(res, statusCode, payload) {
   res.statusCode = statusCode;
@@ -263,23 +313,43 @@ function requestGeminiModel(model, postData, apiKey) {
       let responseBody = '';
       res.on('data', chunk => { responseBody += chunk; });
       res.on('end', () => {
+        let parsed;
+
         try {
-          const parsed = JSON.parse(responseBody);
-          if (parsed.error) {
-            reject(new Error(parsed.error.message || 'Gemini error'));
-            return;
-          }
-          const text = parsed?.candidates?.[0]?.content?.parts
-            ?.map((part) => part.text || '')
-            .join('')
-            .trim();
-          if (text) {
-            resolve(text);
-          } else {
-            reject(new Error('Formato inesperado na resposta da API Gemini.'));
-          }
-        } catch (e) {
-          reject(e);
+          parsed = JSON.parse(responseBody);
+        } catch {
+          const parseError = new Error('Resposta inválida da API Gemini.');
+          parseError.statusCode = res.statusCode;
+          reject(parseError);
+          return;
+        }
+
+        if (parsed.error) {
+          const apiError = new Error(parsed.error.message || 'Gemini error');
+          apiError.statusCode = res.statusCode;
+          apiError.apiStatus = parsed.error.status;
+          reject(apiError);
+          return;
+        }
+
+        if (res.statusCode >= 400) {
+          const httpError = new Error(`Erro HTTP ${res.statusCode} na API Gemini.`);
+          httpError.statusCode = res.statusCode;
+          reject(httpError);
+          return;
+        }
+
+        const text = parsed?.candidates?.[0]?.content?.parts
+          ?.map((part) => part.text || '')
+          .join('')
+          .trim();
+
+        if (text) {
+          resolve(text);
+        } else {
+          const emptyError = new Error('Formato inesperado na resposta da API Gemini.');
+          emptyError.statusCode = res.statusCode;
+          reject(emptyError);
         }
       });
     });
@@ -293,6 +363,14 @@ function requestGeminiModel(model, postData, apiKey) {
     req.write(postData);
     req.end();
   });
+}
+
+function isQuotaExceededError(err) {
+  return (
+    err?.statusCode === 429 ||
+    err?.apiStatus === 'RESOURCE_EXHAUSTED' ||
+    /quota|rate limit/i.test(err?.message || '')
+  );
 }
 
 async function callGeminiAPI(userMessage, history, apiKey) {
@@ -324,17 +402,28 @@ async function callGeminiAPI(userMessage, history, apiKey) {
   try {
     return await requestGeminiModel(configuredModel, postData, apiKey);
   } catch (err) {
-    const modelUnavailable = /no longer available|not found|not supported|does not exist/i.test(err.message || '');
-    if (!modelUnavailable || configuredModel === FALLBACK_GEMINI_MODEL) {
+    if (!isQuotaExceededError(err) || configuredModel === FALLBACK_GEMINI_MODEL) {
       throw err;
     }
-    console.warn(`Modelo "${configuredModel}" indisponível. Tentando "${FALLBACK_GEMINI_MODEL}".`);
+
+    console.warn(`Cota excedida no modelo "${configuredModel}" (HTTP 429). Tentando "${FALLBACK_GEMINI_MODEL}".`);
     return requestGeminiModel(FALLBACK_GEMINI_MODEL, postData, apiKey);
   }
 }
 
 function generateSmartZoologicalResponse(question) {
   const qLower = normalizeText(question);
+
+  // "Chordata" and "cordados" are the same group. Handle this identity
+  // question before keyword scoring so "chordata" never falls into the
+  // notochord topic (it used to match the substring "chorda").
+  const asksDefinition = /(diferenca|relacao|mesma coisa|igual|significa|o que (e|sao)|qual (e|a) diferenca)/.test(qLower);
+  const mentionsChordata = keywordMatches(qLower, 'chordata');
+  const mentionsCordados = keywordMatches(qLower, 'cordados') || keywordMatches(qLower, 'cordado');
+
+  if ((mentionsChordata && mentionsCordados) || (mentionsChordata && asksDefinition)) {
+    return `${CHORDATA_VS_CORDADOS_ANSWER}\n\n---\n**Fontes Científicas Recomendadas:**\n- [Animal Diversity Web (ADW)](https://animaldiversity.org)\n- [Catalogue of Life](https://www.catalogueoflife.org)\n- [WoRMS](https://www.marinespecies.org)`;
+  }
 
   // Pick the topic with the most keyword matches instead of the first hit,
   // otherwise broad words (e.g. "répteis") can hijack a more specific question.
@@ -343,7 +432,7 @@ function generateSmartZoologicalResponse(question) {
 
   for (const topic of KNOWLEDGE_TOPICS) {
     const score = topic.keywords.reduce(
-      (total, kw) => (qLower.includes(normalizeText(kw)) ? total + 1 : total),
+      (total, kw) => (keywordMatches(qLower, kw) ? total + 1 : total),
       0
     );
     if (score > bestScore) {
@@ -357,7 +446,7 @@ function generateSmartZoologicalResponse(question) {
   }
 
   // Specific species queries
-  if (qLower.includes('anfioxo') || qLower.includes('branchiostoma')) {
+  if (keywordMatches(qLower, 'anfioxo') || keywordMatches(qLower, 'branchiostoma')) {
     return `### O Anfioxo (*Branchiostoma lanceolatum*) e sua Relevância Científica
 
 O anfioxo é o mais clássico representante do subfilo **Cephalochordata**.
@@ -370,7 +459,7 @@ O anfioxo é o mais clássico representante do subfilo **Cephalochordata**.
 **Fonte:** [WoRMS - Branchiostoma](https://www.marinespecies.org)`;
   }
 
-  if (qLower.includes('onca') || qLower.includes('panthera onca')) {
+  if (keywordMatches(qLower, 'onca') || keywordMatches(qLower, 'panthera onca') || keywordMatches(qLower, 'onca-pintada')) {
     return `### Onça-Pintada (*Panthera onca*): O Maior Felino das Américas
 
 - **Classificação:** Classe Mammalia, Ordem Carnivora, Família Felidae.
@@ -382,7 +471,7 @@ O anfioxo é o mais clássico representante do subfilo **Cephalochordata**.
 **Fonte:** [CENAP / ICMBio](https://www.icmbio.gov.br/cenap/) e [IUCN Red List](https://www.iucnredlist.org)`;
   }
 
-  if (qLower.includes('brasil') || qLower.includes('brasileiro') || qLower.includes('fauna')) {
+  if (keywordMatches(qLower, 'brasil') || keywordMatches(qLower, 'brasileiro') || keywordMatches(qLower, 'brasileira') || keywordMatches(qLower, 'fauna')) {
     return `### Cordados e a Megabiodiversidade da Fauna Brasileira
 
 O Brasil abriga a maior riqueza biológica de cordados do mundo:
