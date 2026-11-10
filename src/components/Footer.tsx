@@ -43,6 +43,7 @@ export const Footer: React.FC = () => {
               <li><a href="#grupos" className="hover:text-emerald-400 transition">Características dos Grupos</a></li>
               <li><a href="#catalogo" className="hover:text-emerald-400 transition">Catálogo de Espécies</a></li>
               <li><a href="#galeria" className="hover:text-emerald-400 transition">Galeria Fotográfica</a></li>
+              <li><a href="#fotos-if" className="hover:text-emerald-400 transition">Fotos do IF</a></li>
               <li><a href="#habitats" className="hover:text-emerald-400 transition">Habitats e Biomas</a></li>
               <li><a href="#perigos" className="hover:text-emerald-400 transition">Perigos e Primeiros Socorros</a></li>
             </ul>

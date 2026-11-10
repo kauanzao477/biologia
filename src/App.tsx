@@ -7,6 +7,7 @@ import { PhylogenySection } from './components/PhylogenySection';
 import { GroupsSection } from './components/GroupsSection';
 import { SpeciesCatalog } from './components/SpeciesCatalog';
 import { PhotoGallery } from './components/PhotoGallery';
+import { IFPhotosSection } from './components/IFPhotosSection';
 import { HabitatsSection } from './components/HabitatsSection';
 import { DangerSafetySection } from './components/DangerSafetySection';
 import { EvolutionSection } from './components/EvolutionSection';
@@ -108,34 +109,37 @@ export function App() {
         {/* 6. Galeria de fotografias */}
         <PhotoGallery onSelectSpecies={setFocusedSpecies} />
 
-        {/* 7. Habitats e distribuição geográfica */}
+        {/* 7. Fotos de animais registrados no IF */}
+        <IFPhotosSection />
+
+        {/* 8. Habitats e distribuição geográfica */}
         <HabitatsSection />
 
-        {/* 8. Perigos, defesa e relações com os seres humanos */}
+        {/* 9. Perigos, defesa e relações com os seres humanos */}
         <DangerSafetySection />
 
-        {/* 9. Evolução dos cordados */}
+        {/* 10. Evolução dos cordados */}
         <EvolutionSection />
 
-        {/* 10. Conservação e importância ecológica */}
+        {/* 11. Conservação e importância ecológica */}
         <ConservationSection />
 
-        {/* 11. Assistente de inteligência artificial BioChordata */}
+        {/* 12. Assistente de inteligência artificial BioChordata */}
         <AIChatSection
           externalPrompt={aiExternalPrompt}
           onClearExternalPrompt={() => setAiExternalPrompt('')}
         />
 
-        {/* 12. Perguntas frequentes (FAQ) */}
+        {/* 13. Perguntas frequentes (FAQ) */}
         <FAQSection
           onAskAI={handleOpenAIChat}
         />
 
-        {/* 13. Fontes científicas e referências */}
+        {/* 14. Fontes científicas e referências */}
         <SourcesSection />
       </main>
 
-      {/* 14. Rodapé */}
+      {/* 15. Rodapé */}
       <Footer />
 
       {/* Floating Action Button for AI Assistant */}

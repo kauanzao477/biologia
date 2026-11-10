@@ -18,7 +18,8 @@ import {
   HelpCircle,
   FileText,
   ChevronRight,
-  Compass
+  Compass,
+  Images
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -61,6 +62,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         'grupos',
         'catalogo',
         'galeria',
+        'fotos-if',
         'habitats',
         'perigos',
         'evolucao',
@@ -163,6 +165,13 @@ export const Navbar: React.FC<NavbarProps> = ({
       href: '#galeria',
       icon: Camera,
       color: 'text-blue-500 bg-blue-500/10'
+    },
+    {
+      name: 'Fotos do IF',
+      desc: 'Animais fotografados no campus, com identificação',
+      href: '#fotos-if',
+      icon: Images,
+      color: 'text-emerald-500 bg-emerald-500/10'
     }
   ];
 
@@ -222,7 +231,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     }
   ];
 
-  const isTaxonomyActive = ['classificacao', 'grupos', 'catalogo', 'galeria'].includes(activeSection);
+  const isTaxonomyActive = ['classificacao', 'grupos', 'catalogo', 'galeria', 'fotos-if'].includes(activeSection);
   const isEcologyActive = ['habitats', 'evolucao', 'conservacao', 'perigos'].includes(activeSection);
   const isMoreActive = ['faq', 'fontes', 'ia-assistente'].includes(activeSection);
 
