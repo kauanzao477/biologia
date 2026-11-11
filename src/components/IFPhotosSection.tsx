@@ -199,7 +199,7 @@ export const IFPhotosSection: React.FC = () => {
                 aria-label={`Ampliar foto de ${photo.commonName}`}
                 className="group relative flex flex-col rounded-3xl overflow-hidden cursor-pointer bg-slate-50 dark:bg-slate-900 border border-slate-200/70 dark:border-slate-800/70 shadow-md hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1.5"
               >
-                <div className="relative h-64 overflow-hidden bg-slate-900">
+                <div className="relative aspect-[4/3] overflow-hidden bg-slate-900">
                   <img
                     src={photo.imageUrl}
                     alt={photo.alt}
