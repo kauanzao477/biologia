@@ -50,5 +50,17 @@ export default defineConfig(({ mode }) => {
       react(),
       bioChordataBackendPlugin()
     ],
+    preview: {
+      allowedHosts: [
+        'biologia-mtj1.onrender.com',
+        '.onrender.com',
+      ],
+    },
+    server: {
+      allowedHosts: [
+        'biologia-mtj1.onrender.com',
+        '.onrender.com',
+      ],
+    },
   };
 })
