@@ -31,16 +31,28 @@ const MAX_HISTORY_MESSAGES = 10;
 const CHORDATA_SYSTEM_PROMPT = `Você é o "BioChordata — Assistente dos Cordados", um assistente de inteligência artificial especializado em Zoologia, Biologia Comparada e Evolução do Filo Chordata.
 
 SUAS DIRETRIZES FUNDAMENTAIS:
-1. Idioma: Responda SEMPRE em português do Brasil, com linguagem didática, clara, elegante e cientificamente rigorosa.
-2. Escopo Temático: Especialista absoluto no filo Chordata (Cefalocordados, Tunicados, Peixes Ágnatos, Condríctes, Osteíctes, Anfíbios, Répteis, Aves e Mamíferos), suas 5 características fundamentais (notocorda, tubo nervoso dorsal, fendas faringianas, endóstilo/tireoide, cauda pós-anal), filogenia, ecologia, conservação e acidentes com animais peçonhentos/tóxicos no Brasil.
-3. Precisão Científica: Nunca invente espécies, nomes científicos ou dados taxonômicos. Se a ciência tiver incertezas (ex: datas exatas do relógio molecular fóssil), declare abertamente como hipótese ativa.
-4. Concepções Equivocadas: Corrija com polidez e clareza conceitos comuns desatualizados:
+1. Idioma e tom: Responda SEMPRE em português do Brasil, com linguagem didática, clara, elegante e cientificamente rigorosa.
+2. Responda exatamente à pergunta feita:
+   - A PRIMEIRA frase deve responder diretamente ao que o usuário perguntou. Se ele pedir uma lista (ex.: "quais são os grupos..."), entregue a lista completa primeiro e só depois contextualize.
+   - NUNCA troque a pergunta por um assunto vizinho, por uma "correção de conceito" ou por um tema que você considere mais interessante.
+   - Se a pergunta for ambígua, responda à interpretação literal e, se necessário, ofereça a outra interpretação ao final.
+   - Se a pergunta tiver várias partes, responda a TODAS, na ordem em que foram feitas.
+3. Escopo temático: Especialista no filo Chordata (Cefalocordados, Tunicados, Peixes Ágnatos, Condríctes, Osteíctes, Anfíbios, Répteis, Aves e Mamíferos), suas 5 características fundamentais (notocorda, tubo nervoso dorsal, fendas faringianas, endóstilo/tireoide, cauda pós-anal), filogenia, ecologia, conservação e acidentes com animais peçonhentos/tóxicos no Brasil.
+4. Precisão científica: Nunca invente espécies, nomes científicos ou dados taxonômicos. Se a ciência tiver incertezas (ex.: datas do relógio molecular), declare abertamente como hipótese ativa.
+5. Base taxonômica de referência (trate como verdade):
+   - Reptilia (= Sauropsida) é um clado monofilético que INCLUI as aves. Grupos viventes: Testudines (tartarugas, cágados, jabutis); Lepidosauria (Squamata — lagartos, serpentes, anfisbenas — e Rhynchocephalia — tuatara); Archosauria (Crocodylia + Aves). Grupos extintos incluem plesiossauros, ictiossauros, pterossauros e dinossauros não-avianos.
+   - Sem as aves, "répteis" é um agrupamento parafilético.
+   - As aves ESTÃO DENTRO de Theropoda (clado Maniraptora/Avialae); não são apenas "irmãs" dos terópodes.
+   - O Archaeopteryx é uma evidência fóssil-chave, mas a origem terópode das aves se sustenta por múltiplas linhas independentes (anatomia, embriologia, genética e fósseis). Não diga que um único fóssil "provou".
+   - A endotermia aviana provavelmente precedeu ou coevoluiu com o voo; não afirme que surgiu "para" voar.
+6. Concepções equivocadas: Corrija com polidez e clareza, mas apenas quando for pertinente à pergunta ou quando o usuário afirmar algo incorreto:
    - "Peixes" é um grupo parafilético na cladística moderna.
-   - As aves pertencem filogeneticamente à linhagem dos répteis arcossauros (são dinossauros terópodes aviários sobreviventes).
+   - As aves pertencem filogeneticamente à linhagem dos répteis arcossauros (são dinossauros terópodes viventes).
    - O anfioxo e a ascídia são cordados, mas NÃO são vertebrados (são protocordados).
-   - Nem todo animal venenoso é peçonhento (peçonhentos inoculam ativamente; venenosos causam intoxicação passiva por ingestão/contato).
-5. Estrutura de Resposta: Organize a resposta com títulos breves em negrito, tópicos explicativos com marcadores e uma seção final com "Fontes recomendadas para consulta" (ex: IUCN Red List, Animal Diversity Web, ICMBio, Instituto Butantan).
-6. Formatação: Use Markdown simples (negrito, listas e links). Não use HTML.`;
+   - Nem todo animal venenoso é peçonhento (peçonhentos inoculam ativamente; venenosos intoxicam passivamente por ingestão/contato).
+7. Estrutura de resposta: Use títulos breves em negrito, tópicos com marcadores e, ao final, uma seção "Fontes recomendadas para consulta" (ex.: IUCN Red List, Animal Diversity Web, ICMBio, Instituto Butantan).
+8. Autoverificação antes de enviar: confirme que (a) a primeira frase responde à pergunta literal; (b) todos os itens pedidos foram cobertos; (c) nenhuma hipótese foi apresentada como certeza; (d) você não desviou para outro tema.
+9. Formatação: Use Markdown simples (negrito, listas e links). Não use HTML.`;
 
 // Local high-fidelity zoological knowledge base for fallback or augmentation
 const KNOWLEDGE_TOPICS = [
@@ -89,9 +101,9 @@ O Filo Chordata é subdividido em três grandes subfilos:
     title: 'Aves pertencem à linhagem dos répteis?',
     content: `**Sim! Na biologia evolutiva moderna, as aves são dinossauros terópodes arcossauros vivos.**
 
-- Tradicionalmente, Lineu separava répteis e aves em classes distintas. Porém, as análises de anatomia comparada, embriologia e fósseis como o *Archaeopteryx* provaram que as aves compartilham um ancestral comum exclusivo com os dinossauros carnívoros (Theropoda).
+- Tradicionalmente, Lineu separava répteis e aves em classes distintas. Porém, evidências de anatomia comparada, embriologia, genética e o registro fóssil sustentam que as aves são dinossauros terópodes: elas estão **dentro** de Theropoda (clado Maniraptora/Avialae), e não apenas "irmãs" dos terópodes. O *Archaeopteryx* é uma evidência fóssil-chave, mas a conclusão não depende de um único fóssil.
 - As aves estão mais intimamente aparentadas aos crocodilianos (grupo Archosauria) do que os crocodilos estão aparentados aos lagartos e serpentes.
-- Por isso, no clado monofilético **Sauropsida**, as aves são répteis modificados que desenvolveram penas assimétricas, ossos pneumáticos, quilha esternal e endotermia para o voo.`
+- Por isso, no clado monofilético **Sauropsida**, as aves são répteis modificados que desenvolveram penas assimétricas, ossos pneumáticos e quilha esternal. A endotermia aviana provavelmente precedeu ou coevoluiu com o voo — não surgiu simplesmente "para" voar.`
   },
   {
     keywords: ['anfibio', 'anfibios', 'reptil', 'repteis', 'diferenca entre anfibios', 'pele', 'ovo amniotico'],
@@ -200,6 +212,20 @@ const CHORDATA_VS_CORDADOS_ANSWER = `### Chordata e "cordados": qual é a difere
 - Portanto, dizer "Chordata" ou "cordados" é equivalente: o primeiro é mais técnico e o segundo, mais didático.
 
 > Não confunda o filo **Chordata** (o grupo de animais) com a **notocorda** (uma estrutura anatômica presente nesses animais).`;
+
+const REPTILE_GROUPS_ANSWER = `### Quais são os grupos dentro dos répteis?
+
+No sentido filogenético moderno, **Reptilia (= Sauropsida)** é um clado monofilético que **inclui as aves**. Os grupos viventes são:
+
+- **Testudines (Chelonia):** tartarugas, cágados e jabutis.
+- **Lepidosauria:** **Squamata** (lagartos, serpentes e anfisbenas) + **Rhynchocephalia** (tuatara).
+- **Archosauria:** **Crocodylia** (jacarés, crocodilos e gaviais) + **Aves**.
+
+A esses somam-se grupos totalmente extintos, como plesiossauros, ictiossauros, pterossauros e dinossauros não-avianos.
+
+**Ponto-chave:** "répteis" só é um grupo natural (monofilético) se as aves forem incluídas. Sem elas, o grupo é parafilético.
+
+> A classificação tradicional de Lineu dividia os "répteis" em subclasses (Anapsida, Diapsida, Synapsida e Euryapsida). Hoje sabemos que Synapsida deu origem aos mamíferos (portanto, não são répteis) e que Euryapsida é um agrupamento inválido.`;
 
 function sendJson(res, statusCode, payload) {
   res.statusCode = statusCode;
@@ -406,6 +432,20 @@ function generateSmartZoologicalResponse(question) {
 
   if ((mentionsChordata && mentionsCordados) || (mentionsChordata && asksDefinition)) {
     return `${CHORDATA_VS_CORDADOS_ANSWER}\n\n---\n**Fontes Científicas Recomendadas:**\n- [Animal Diversity Web (ADW)](https://animaldiversity.org)\n- [Catalogue of Life](https://www.catalogueoflife.org)\n- [WoRMS](https://www.marinespecies.org)`;
+  }
+
+  // A question about the groups/classification of reptiles must list those
+  // groups. Without this guard, the broad keyword "répteis" made the engine
+  // answer a neighbouring question ("aves são répteis?"), which is correct
+  // content but not what was asked.
+  const mentionsReptiles =
+    keywordMatches(qLower, 'reptil') || keywordMatches(qLower, 'repteis');
+  const asksTaxonomy = /(grupos?|subgrupos?|classificacao|subdivisao|categorias|tipos|diversidade)/.test(
+    qLower
+  );
+
+  if (mentionsReptiles && asksTaxonomy) {
+    return `${REPTILE_GROUPS_ANSWER}\n\n---\n**Fontes Científicas Recomendadas:**\n- [Animal Diversity Web (ADW)](https://animaldiversity.org)\n- [IUCN Red List](https://www.iucnredlist.org)\n- [The Reptile Database](https://reptile-database.reptarium.cz)`;
   }
 
   // Pick the topic with the most keyword matches instead of the first hit,
