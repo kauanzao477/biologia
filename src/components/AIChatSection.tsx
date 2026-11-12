@@ -134,7 +134,7 @@ export const AIChatSection: React.FC<AIChatSectionProps> = ({
   };
 
   const openApiKeyModal = () => {
-    setTempApiKey(localStorage.getItem('biochordata_gemini_key') ?? '');
+    setTempApiKey(localStorage.getItem('biochordata_groq_key') ?? '');
     setApiKeyModalOpen(true);
   };
 
@@ -142,9 +142,9 @@ export const AIChatSection: React.FC<AIChatSectionProps> = ({
     const trimmedKey = tempApiKey.trim();
 
     if (trimmedKey) {
-      localStorage.setItem('biochordata_gemini_key', trimmedKey);
+      localStorage.setItem('biochordata_groq_key', trimmedKey);
     } else {
-      localStorage.removeItem('biochordata_gemini_key');
+      localStorage.removeItem('biochordata_groq_key');
     }
 
     setApiKeyModalOpen(false);
@@ -200,11 +200,11 @@ export const AIChatSection: React.FC<AIChatSectionProps> = ({
             <div className="flex items-center gap-2">
               <button
                 onClick={openApiKeyModal}
-                title="Configurar chave de API Gemini própria (opcional)"
+                title="Configurar chave de API Groq própria (opcional)"
                 className="p-2 rounded-xl text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800 transition flex items-center gap-1.5 text-xs font-semibold"
               >
                 <Key className="w-4 h-4 text-emerald-500" />
-                <span className="hidden sm:inline">Chave Gemini</span>
+                <span className="hidden sm:inline">Chave Groq</span>
               </button>
 
               <button
@@ -361,23 +361,23 @@ export const AIChatSection: React.FC<AIChatSectionProps> = ({
               <div className="flex items-center gap-2">
                 <Key className="w-5 h-5 text-emerald-600" />
                 <h3 id="api-key-dialog-title" className="font-bold text-lg text-slate-900 dark:text-white">
-                  Chave de API Gemini (Opcional)
+                  Chave de API Groq (Opcional)
                 </h3>
               </div>
 
               <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
                 Por padrão, o BioChordata já utiliza um motor zoológico completo no backend.
-                Se você quiser conectar diretamente sua própria chave da API Google Gemini para conversas abertas, cole-a abaixo.
+                Se você quiser conectar diretamente sua própria chave da API Groq (modelos GPT-OSS, Qwen e afins) para conversas abertas, cole-a abaixo.
                 A chave fica salva apenas neste navegador.
               </p>
 
               <div>
                 <input
                   type="password"
-                  placeholder="AIzaSy..."
+                  placeholder="gsk_..."
                   value={tempApiKey}
                   onChange={(e) => setTempApiKey(e.target.value)}
-                  aria-label="Chave de API Gemini"
+                  aria-label="Chave de API Groq"
                   autoComplete="off"
                   className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono"
                 />

@@ -35,14 +35,14 @@ export default defineConfig(({ mode }) => {
   // server, so load every .env value and expose the API key to process.env.
   const env = loadEnv(mode, process.cwd(), '');
 
-  if (env.GEMINI_API_KEY) {
-    process.env.GEMINI_API_KEY = env.GEMINI_API_KEY;
+  if (env.GROQ_API_KEY) {
+    process.env.GROQ_API_KEY = env.GROQ_API_KEY;
   }
-  if (env.GEMINI_MODEL) {
-    process.env.GEMINI_MODEL = env.GEMINI_MODEL;
+  if (env.GROQ_MODEL) {
+    process.env.GROQ_MODEL = env.GROQ_MODEL;
   }
 
-  console.log(`[BioChordata] Modelo Gemini: ${process.env.GEMINI_MODEL || 'gemini-3.8-flash (padrão)'}`);
+  console.log(`[BioChordata] Modelo Groq: ${process.env.GROQ_MODEL || 'openai/gpt-oss-120b (padrão)'}`);
 
   return {
     plugins: [

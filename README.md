@@ -62,8 +62,8 @@ O site organiza-se estritamente na seguinte sequência didática:
 O portal conta com um backend seguro integrado ao servidor Vite (`/api/chat`):
 
 - **Motor Central Especializado:** Quando não há chave configurada (ou a API falha), as respostas vêm de um motor local de recuperação de conhecimento com uma base curada de tópicos zoológicos, em português do Brasil. Ele cobre as características dos cordados, filogenia, grupos, conservação e animais peçonhentos, mas não substitui uma IA generativa.
-- **Suporte Nativo a Google Gemini:** Se a variável de ambiente `GEMINI_API_KEY` estiver configurada no servidor ou se o usuário informar sua própria chave através do modal de configurações (ícone de chave), o backend efetua chamadas diretas e seguras para a API do Google Gemini, protegendo credenciais contra exposição no frontend. O modelo padrão é `gemini-3.8-flash` (configurável via `GEMINI_MODEL`), com fallback automático para `gemini-3.5-flash-lite` quando a API retorna erro de cota ou indisponibilidade temporária (HTTP 429/503).
-- **Histórico de Conversa:** As últimas mensagens do diálogo são enviadas ao Gemini como contexto, junto com as instruções de sistema do assistente.
+- **Suporte Nativo à API Groq:** Se a variável de ambiente `GROQ_API_KEY` estiver configurada no servidor ou se o usuário informar sua própria chave através do modal de configurações (ícone de chave), o backend efetua chamadas diretas e seguras para a API da Groq (endpoint compatível com OpenAI), protegendo credenciais contra exposição no frontend. O modelo padrão é `openai/gpt-oss-120b` (configurável via `GROQ_MODEL`), com fallback automático para `openai/gpt-oss-20b` quando a API retorna erro de cota, limite de requisições ou indisponibilidade temporária (HTTP 429/5xx).
+- **Histórico de Conversa:** As últimas mensagens do diálogo são enviadas ao modelo como contexto, junto com as instruções de sistema do assistente.
 
 ---
 
@@ -74,7 +74,7 @@ O portal conta com um backend seguro integrado ao servidor Vite (`/api/chat`):
 - **Ícones:** Lucide React
 - **Tipografia:** Google Fonts (*Outfit* e *Plus Jakarta Sans*)
 - **Backend / API:** Middleware seguro em Node.js / Connect acoplado ao Vite (`server/aiHandler.js`)
-- **IA:** SDK oficial `@google/generative-ai` com o modelo `gemini-3.8-flash` (fallback para `gemini-3.5-flash-lite` em HTTP 429/503)
+- **IA:** API da Groq (endpoint compatível com OpenAI, via `fetch`) com o modelo `openai/gpt-oss-120b` (fallback para `openai/gpt-oss-20b` em HTTP 429/503)
 
 ---
 
@@ -119,18 +119,18 @@ O resultado será compilado na pasta `dist/`.
 
 O portal funciona **100% de fábrica** mesmo sem nenhuma chave de API externa, graças ao motor de conhecimento de cordados embutido no backend.
 
-Caso deseje ativar o modelo gerador completo **Google Gemini**:
+Caso deseje ativar o modelo gerador completo **Groq**:
 1. Copie o arquivo de exemplo e preencha a chave:
    ```bash
    cp .env.example .env
    ```
    ```env
-   GEMINI_API_KEY=sua_chave_aqui
-   GEMINI_MODEL=gemini-3.8-flash
+   GROQ_API_KEY=sua_chave_aqui
+   GROQ_MODEL=openai/gpt-oss-120b
    ```
-   Obtenha uma chave em [Google AI Studio](https://aistudio.google.com/apikey).
+   Obtenha uma chave em [Groq Console](https://console.groq.com/keys).
 2. **Reinicie o servidor** (`npm run dev`) após criar ou alterar o `.env`. As variáveis são lidas apenas na inicialização.
-3. Alternativamente, insira a chave diretamente na interface clicando no botão **"Chave Gemini"** no topo da caixa de chat do BioChordata AI. Ela é salva no `localStorage` do navegador e pode ser removida pelo mesmo modal.
+3. Alternativamente, insira a chave diretamente na interface clicando no botão **"Chave Groq"** no topo da caixa de chat do BioChordata AI. Ela é salva no `localStorage` do navegador e pode ser removida pelo mesmo modal.
 
 > 🔒 O arquivo `.env` está no `.gitignore` e nunca deve ser commitado. A chave do servidor não é enviada ao frontend.
 

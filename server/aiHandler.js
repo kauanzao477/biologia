@@ -1,24 +1,25 @@
 // Backend AI Handler for BioChordata
-// Uses the official Google Generative AI SDK (@google/generative-ai) when a
-// key is configured. Falls back to a rich zoological knowledge-retrieval
-// engine for Chordata topics when the API is unavailable or out of quota.
+// Uses the Groq API (OpenAI-compatible endpoint) when a key is configured.
+// Falls back to a rich zoological knowledge-retrieval engine for Chordata
+// topics when the API is unavailable or out of quota.
 
-import { GoogleGenerativeAI } from '@google/generative-ai';
+const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
+const DEFAULT_GROQ_MODEL = 'openai/gpt-oss-120b';
+const FALLBACK_GROQ_MODEL = 'openai/gpt-oss-20b';
+const LEGACY_GROQ_MODEL = /^(llama3-|mixtral-|gemma)/i;
+const GROQ_TIMEOUT_MS = 30_000;
+const GROQ_MAX_COMPLETION_TOKENS = 1600;
 
-const DEFAULT_GEMINI_MODEL = 'gemini-3.8-flash';
-const FALLBACK_GEMINI_MODEL = 'gemini-3.5-flash-lite';
-const LEGACY_GEMINI_MODEL = /^(gemini-(?:1\.|2\.(?:0|5))|gemini-flash-latest$)/i;
+function resolveGroqModel() {
+  const configured = (process.env.GROQ_MODEL || '').trim();
 
-function resolveGeminiModel() {
-  const configured = (process.env.GEMINI_MODEL || '').trim();
+  if (!configured) return DEFAULT_GROQ_MODEL;
 
-  if (!configured) return DEFAULT_GEMINI_MODEL;
-
-  if (LEGACY_GEMINI_MODEL.test(configured)) {
+  if (LEGACY_GROQ_MODEL.test(configured)) {
     console.warn(
-      `Modelo Gemini obsoleto configurado ("${configured}"). Usando "${DEFAULT_GEMINI_MODEL}".`
+      `Modelo Groq obsoleto configurado ("${configured}"). Usando "${DEFAULT_GROQ_MODEL}".`
     );
-    return DEFAULT_GEMINI_MODEL;
+    return DEFAULT_GROQ_MODEL;
   }
 
   return configured;
@@ -213,7 +214,7 @@ function sanitizeHistory(history) {
     .filter((entry) => entry && typeof entry.content === 'string')
     .slice(-MAX_HISTORY_MESSAGES)
     .map((entry) => ({
-      role: entry.role === 'assistant' || entry.role === 'model' ? 'model' : 'user',
+      role: entry.role === 'assistant' || entry.role === 'model' ? 'assistant' : 'user',
       content: entry.content.trim().slice(0, MAX_MESSAGE_LENGTH)
     }))
     .filter((entry) => entry.content.length > 0);
@@ -276,20 +277,20 @@ export async function handleAIChat(req, res) {
       }
 
       const history = sanitizeHistory(data.history);
-      const apiKey = (process.env.GEMINI_API_KEY || clientApiKey).trim();
+      const apiKey = (process.env.GROQ_API_KEY || clientApiKey).trim();
 
-      // If a Gemini API key is available, call the Google Gemini endpoint
+      // If a Groq API key is available, call the Groq chat completion endpoint
       if (apiKey.length > 10) {
         try {
-          const geminiResponse = await callGeminiAPI(userMessage, history, apiKey);
+          const groqResponse = await callGroqAPI(userMessage, history, apiKey);
           sendJson(res, 200, {
-            reply: geminiResponse,
-            source: 'gemini-api',
+            reply: groqResponse,
+            source: 'groq-api',
             status: 'success'
           });
           return;
         } catch (apiErr) {
-          console.warn('Gemini API call failed, using high-precision local zoological engine:', apiErr.message);
+          console.warn('Groq API call failed, using high-precision local zoological engine:', apiErr.message);
           // Fall through to local intelligent engine
         }
       }
@@ -311,18 +312,12 @@ export async function handleAIChat(req, res) {
   });
 }
 
-function createGeminiModel(apiKey, modelName) {
-  const genAI = new GoogleGenerativeAI(apiKey);
-
-  return genAI.getGenerativeModel({
-    model: modelName,
-    systemInstruction: CHORDATA_SYSTEM_PROMPT,
-    generationConfig: {
-      temperature: 0.3,
-      maxOutputTokens: 1200,
-      topP: 0.95
-    }
-  });
+function buildGroqMessages(userMessage, history) {
+  return [
+    { role: 'system', content: CHORDATA_SYSTEM_PROMPT },
+    ...history.map((entry) => ({ role: entry.role, content: entry.content })),
+    { role: 'user', content: userMessage }
+  ];
 }
 
 function isFallbackEligibleError(err) {
@@ -335,45 +330,67 @@ function isFallbackEligibleError(err) {
   );
 }
 
-async function generateWithGeminiModel(modelName, contents, apiKey) {
-  const model = createGeminiModel(apiKey, modelName);
-  const result = await model.generateContent({ contents });
-  const text = result.response.text().trim();
-
-  if (!text) {
-    throw new Error('Formato inesperado na resposta da API Gemini.');
-  }
-
-  return text;
-}
-
-async function callGeminiAPI(userMessage, history, apiKey) {
-  const contents = [
-    ...history.map((entry) => ({
-      role: entry.role,
-      parts: [{ text: entry.content }]
-    })),
-    {
-      role: 'user',
-      parts: [{ text: userMessage }]
-    }
-  ];
-
-  const configuredModel = resolveGeminiModel();
+async function generateWithGroqModel(modelName, messages, apiKey) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), GROQ_TIMEOUT_MS);
 
   try {
-    return await generateWithGeminiModel(configuredModel, contents, apiKey);
+    const response = await fetch(GROQ_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: modelName,
+        messages,
+        temperature: 0.3,
+        top_p: 0.95,
+        max_completion_tokens: GROQ_MAX_COMPLETION_TOKENS,
+        stream: false
+      }),
+      signal: controller.signal
+    });
+
+    if (!response.ok) {
+      const details = await response.text().catch(() => '');
+      const err = new Error(
+        `Groq API HTTP ${response.status}: ${details.slice(0, 300) || 'sem detalhes'}`
+      );
+      err.status = response.status;
+      throw err;
+    }
+
+    const payload = await response.json();
+    const text = payload?.choices?.[0]?.message?.content;
+
+    if (typeof text !== 'string' || !text.trim()) {
+      throw new Error('Formato inesperado na resposta da API Groq.');
+    }
+
+    return text.trim();
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function callGroqAPI(userMessage, history, apiKey) {
+  const messages = buildGroqMessages(userMessage, history);
+  const configuredModel = resolveGroqModel();
+
+  try {
+    return await generateWithGroqModel(configuredModel, messages, apiKey);
   } catch (err) {
-    if (!isFallbackEligibleError(err) || configuredModel === FALLBACK_GEMINI_MODEL) {
+    if (!isFallbackEligibleError(err) || configuredModel === FALLBACK_GROQ_MODEL) {
       throw err;
     }
 
     const status = err?.status ?? err?.statusCode ?? 'sem status';
     console.warn(
-      `Gemini "${configuredModel}" indisponível (HTTP ${status}). Tentando fallback "${FALLBACK_GEMINI_MODEL}".`
+      `Groq "${configuredModel}" indisponível (HTTP ${status}). Tentando fallback "${FALLBACK_GROQ_MODEL}".`
     );
 
-    return generateWithGeminiModel(FALLBACK_GEMINI_MODEL, contents, apiKey);
+    return generateWithGroqModel(FALLBACK_GROQ_MODEL, messages, apiKey);
   }
 }
 

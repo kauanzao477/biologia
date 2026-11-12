@@ -1,6 +1,6 @@
 export interface ChatResponse {
   reply: string;
-  source: 'gemini-api' | 'biochordata-core-engine';
+  source: 'groq-api' | 'biochordata-core-engine';
   status: 'success' | 'error';
   error?: string;
 }
@@ -9,7 +9,7 @@ export async function askBioChordata(
   message: string, 
   history: Array<{ role: string; content: string }> = []
 ): Promise<ChatResponse> {
-  const customApiKey = localStorage.getItem('biochordata_gemini_key') || '';
+  const customApiKey = localStorage.getItem('biochordata_groq_key') || '';
 
   try {
     const res = await fetch('/api/chat', {
